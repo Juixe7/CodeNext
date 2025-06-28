@@ -1,7 +1,7 @@
 const express=require("express");
 const app = express();
 require('dotenv').config();
-const main = require("./config/db")
+const main = require("./src/config/db")
 const cookie_parser=require ('cookie-parser');
 
 app.use(express.json());
