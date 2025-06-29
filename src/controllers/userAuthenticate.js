@@ -7,14 +7,17 @@ const register = async(req,res)=>{
     try {
         //validate the data
         validate(req.body);
-        const {firstName ,emailId,password}=req.body;
+        const {firstName,lastname,emailId,password}=req.body;
         req.body.password = await bcrypt.hash(password,10);
 
         //now the user has registered successfully 
         //now we will create a token and send it to the user
         const user = await User.create(req.body);
-
-        const token=jwt.sign({_id:User._id,emailId:emailId},process.env.SECRET_KEY,60*60);
+        const token = jwt.sign(
+          { _id: user._id, emailId: user.emailId },
+          process.env.SECRET_KEY,
+          { expiresIn: 60 * 60 } // ✅ this is a plain object now
+        );
         res.cookie('token',token,{maxAge:60*60*1000});
         res.status(201).send("User created Successfully!");
     } 
@@ -45,9 +48,14 @@ const login = async(req,res)=>{
     if (!isMatch) {
       return res.status(401).json({ error: "Incorrect password" });
     }
-
-    const token = jwt.sign({_id:user._id,emailId:emailId},process.env.SECRET_KEY,{expiresIn:60*60});
+const token = jwt.sign(
+  { _id: user._id, emailId: user.emailId },
+  process.env.SECRET_KEY,
+  { expiresIn: 60 * 60 }  // ✅ correct usage
+  
+);
     res.cookie('token',token,{maxAge:60*60*1000});
+  
 
     res.status(204).send("Logged in Succesfully!");
 
@@ -57,3 +65,9 @@ const login = async(req,res)=>{
     res.status(401).send("Error"+error);
   }
 }
+
+const logout = async(req,res)=>{
+
+}
+
+module.exports ={register,login,logout};

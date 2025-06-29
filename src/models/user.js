@@ -5,7 +5,7 @@ const {Schema} = mongoose;
 const userSchema = new Schema({
     firstName:{
         type:String,
-        require:true,
+        required:true,
         minLength:2,
         maxLength:28,
     },
@@ -26,7 +26,7 @@ const userSchema = new Schema({
         type:String,
         required:true,
         minLength:3,
-        maxLength:20,
+        maxLength:100,
     },
     age:{
         type:Number,
@@ -46,3 +46,5 @@ const userSchema = new Schema({
 })
 
 const User = mongoose.model("user",userSchema);
+
+module.exports = User;
