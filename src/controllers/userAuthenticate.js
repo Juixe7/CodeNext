@@ -10,12 +10,13 @@ const register = async(req,res)=>{
         validate(req.body);
         const {firstName,lastname,emailId,password}=req.body;
         req.body.password = await bcrypt.hash(password,10);
+        req.body.role= "user";
 
         //now the user has registered successfully 
         //now we will create a token and send it to the user
         const user = await User.create(req.body);
         const token = jwt.sign(
-          { _id: user._id, emailId: user.emailId },
+          { _id: user._id, emailId: user.emailId ,role:'user'},
           process.env.SECRET_KEY,
           { expiresIn: 60 * 60 } // ✅ this is a plain object now
         );
@@ -58,7 +59,7 @@ const login = async (req, res) => {
     }
 
     const newToken = jwt.sign(
-      { _id: user._id, emailId: user.emailId },
+      { _id: user._id, emailId: user.emailId,role:user.role},
       process.env.SECRET_KEY,
       { expiresIn: 60 * 60 }
     );
@@ -98,4 +99,28 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports ={register,login,logout};
+const adminRegister =async(req,res)=>{
+    try {
+        //validate the data
+        validate(req.body);
+        const {firstName,lastname,emailId,password}=req.body;
+        req.body.password = await bcrypt.hash(password,10);
+        req.body.role= "admin";
+
+        //now the user has registered successfully 
+        //now we will create a token and send it to the user
+        const user = await User.create(req.body);
+        const token = jwt.sign(
+          { _id: user._id, emailId: user.emailId ,role:'admin'},
+          process.env.SECRET_KEY,
+          { expiresIn: 60 * 60 } // ✅ this is a plain object now
+        );
+        res.cookie('token',token,{maxAge:60*60*1000});
+        res.status(201).send("User created Successfully!");
+    } 
+    catch (error) {
+        res.status(400).send("Error"+error);
+    }
+}
+
+module.exports ={register,login,logout,adminRegister};

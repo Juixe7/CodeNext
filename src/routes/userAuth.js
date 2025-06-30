@@ -12,7 +12,7 @@ authRouter.post('/login',login);
 //logout
 authRouter.post('/logout',userMiddleware,logout);
 
-authRouter.post("./admin/register",adminMiddleware,adminRegister);
+authRouter.post("/admin/register",adminMiddleware,adminRegister);
 
 // //Getprofile
 // authRouter.get('/getProfile',getProfile);
