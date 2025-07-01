@@ -1,38 +1,46 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/user');
-const redisClient = require("../config/redis");
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
+const redisClient = require("../config/redis")
 
-const userMiddleware = async (req, res, next) => {
-  try {
-    const { token } = req.cookies;
+const userMiddleware = async (req,res,next)=>{
 
-    if (!token) {
-      return res.status(401).send("Token is not present");
+    try{
+
+        const {token} = req.cookies;
+        if(!token)
+            throw new Error("Token is not persent");
+
+        const payload = jwt.verify(token,process.env.JWT_KEY);
+
+        const {_id} = payload;
+
+        if(!_id){
+            throw new Error("Invalid token");
+        }
+
+        const result = await User.findById(_id);
+
+        if(!result){
+            throw new Error("User Doesn't Exist");
+        }
+
+        // Redis ke blockList mein persent toh nahi hai
+
+        const IsBlocked = await redisClient.exists(`token:${token}`);
+
+        if(IsBlocked)
+            throw new Error("Invalid Token");
+
+        req.result = result;
+
+
+        next();
+    }
+    catch(err){
+        res.status(401).send("Error: "+ err.message)
     }
 
-    const payload = jwt.verify(token, process.env.SECRET_KEY);
-    const { _id } = payload;
+}
 
-    if (!_id) {
-      return res.status(401).send("Invalid Token!");
-    }
-
-    const user = await User.findById(_id);
-    if (!user) {
-      return res.status(401).send("User doesn't exist!");
-    }
-
-    const isBlocked = await redisClient.exists(`token:${token}`);
-    if (isBlocked) {
-      return res.status(401).send("Invalid Token (Blocked)");
-    }
-
-    req.user = user; // attach user data to request
-    next(); // 🚀 pass control to the next middleware/route
-  } catch (err) {
-    console.error("Middleware Error:", err.message);
-    res.status(401).send("Authentication Failed: " + err.message);
-  }
-};
 
 module.exports = userMiddleware;

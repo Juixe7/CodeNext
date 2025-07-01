@@ -1,57 +1,49 @@
-const Problem = require("../models/problem");
-const getLanguageById = require("../utils/problemUtility");
-const problemCreator = require("../utils/problemUtility");
-const { submitBatch, submitToken } = require("../utils/problemUtility");  
-const createProblem = async (req, res) => {
-  const {
-    title,
-    description,
-    difficulty,
-    tags,
-    visibleTestCases,
-    hiddenTestCases,
-    startCode,
-    referenceSolution,
-    problemCreator,
-  } = req.body;
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
+const redisClient = require("../config/redis")
 
-  try {
-    //we have to iterate through the startCode and referenceSolution arrays
-    for (const { language, completeCode } of referenceSolution) {
-      //now we will check if its valid using Judge 0
-      //source code
-      //language_id
-      //std_in
-      //expected_output
+const adminMiddleware = async (req,res,next)=>{
 
-      //creating a batch submission for all test cases
-      const languageId = getLanguageById(language);
-      for (const element of visibleTestCases) {
-        const submissions = visibleTestCases.map((testCases) => ({
-          source_code: completeCode,
-          language_id: languageId,
-          stdin: testCases.input,
-          expected_output: testCases.output,
-        }));
-      }
-      const submitResult = await submitBatch(submissions);
+    try{
 
-     const resultToken = submitResult.map((value)=>value.token);
+        const {token} = req.cookies;
+        if(!token)
+            throw new Error("Token is not persent");
 
-     const testResult = await submitToken(resultToken);
+        const payload = jwt.verify(token,process.env.JWT_KEY);
 
-     for(const test of testResult){
-      if(test.status.id!=3){
-        return res.status(400).send("Error Occured");
-      }
-     }
+        const {_id} = payload;
+
+        if(!_id){
+            throw new Error("Invalid token");
+        }
+
+        const result = await User.findById(_id);
+
+        if(payload.role!='admin')
+            throw new Error("Invalid Token");
+
+        if(!result){
+            throw new Error("User Doesn't Exist");
+        }
+
+        // Redis ke blockList mein persent toh nahi hai
+
+        const IsBlocked = await redisClient.exists(`token:${token}`);
+
+        if(IsBlocked)
+            throw new Error("Invalid Token");
+
+        req.result = result;
+
+
+        next();
     }
-     // we can store the problem in the database
-     await Problem.create({
-      ...req.body,
-      problemCreator: req.user._id
-     })
+    catch(err){
+        res.status(401).send("Error: "+ err.message)
+    }
 
-     res.status(201).send("Problem created successfully!");
-  } catch (error) {}
-};
+}
+
+
+module.exports = adminMiddleware;

@@ -1,32 +1,25 @@
-
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const {Schema} = mongoose;
 
 const userSchema = new Schema({
     firstName:{
-        type:String,
-        required:true,
-        minLength:2,
-        maxLength:28,
+        type: String,
+        required: true,
+        minLength:3,
+        maxLength:20
     },
     lastName:{
         type:String,
         minLength:3,
-        maxLength:28,
+        maxLength:20,
     },
     emailId:{
-     type:String,
-     required:true,
-     unique:true,
-     trim:true,
-     lowercase:true,
-     immutable:true
-    },
-    password:{
         type:String,
         required:true,
-        minLength:3,
-        maxLength:100,
+        unique:true,
+        trim: true,
+        lowercase:true,
+        immutable: true,
     },
     age:{
         type:Number,
@@ -36,14 +29,19 @@ const userSchema = new Schema({
     role:{
         type:String,
         enum:['user','admin'],
-        default:'user',
+        default: 'user'
     },
     problemSolved:{
+        type:[String]
+    },
+    password:{
         type:String,
+        required: true
     }
 },{
     timestamps:true
-})
+});
+
 
 const User = mongoose.model("user",userSchema);
 

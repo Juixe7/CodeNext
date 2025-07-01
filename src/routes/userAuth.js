@@ -1,20 +1,21 @@
-const express=require('express');//to create a router
-const authRouter=express.Router();
-const {register,login,logout, adminRegister}=require("../controllers/userAuthenticate");
-const userMiddleware=require("../middleware/userMiddleware")
-const adminMiddleware=require("../middleware/adminMiddleware")
-//register
-authRouter.post('/register',register);
+const express = require('express');
 
-//login
-authRouter.post('/login',login);
+const authRouter =  express.Router();
+const {register, login,logout, adminRegister} = require('../controllers/userAuthent')
+const userMiddleware = require("../middleware/userMiddleware");
+const adminMiddleware = require('../middleware/adminMiddleware');
 
-//logout
-authRouter.post('/logout',userMiddleware,logout);
-
-authRouter.post("/admin/register",adminMiddleware,adminRegister);
-
-// //Getprofile
+// Register
+authRouter.post('/register', register);
+authRouter.post('/login', login);
+authRouter.post('/logout', userMiddleware, logout);
+authRouter.post('/admin/register', adminMiddleware ,adminRegister);
 // authRouter.get('/getProfile',getProfile);
 
+
 module.exports = authRouter;
+
+// login
+// logout
+// GetProfile
+

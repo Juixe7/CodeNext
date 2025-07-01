@@ -1,47 +1,36 @@
-const { kMaxLength } = require("buffer");
-const { maxHeaderSize } = require("http");
-const mongoose =require("mongoose");
-const { type } = require("os");
-const { init } = require("./user");
-const {Schema}=mongoose;
+const mongoose = require('mongoose');
+const {Schema} = mongoose;
 
 const problemSchema = new Schema({
     title:{
         type:String,
-        required:true,
-        minLength:3,
-        maxLength:100   
+        required:true
     },
     description:{
         type:String,
-        required:true,
-        minLength:10,
-        maxLength:1000
-    },
-    type:{
-        type:String,
-        enum:["easy","medium","hard"],
         required:true
     },
-    tags:{
+    difficulty:{
         type:String,
-        enum:["array","string","linkedlist","tree","graph","stack","queue","hashing","dynamic programming","greedy","backtracking"],
+        enum:['easy','medium','hard'],
+        required:true,
+    },
+    tags:{
+        type:[String],
+        enum:['array','linkedList','graph','dp'],
         required:true
     },
     visibleTestCases:[
         {
-            input:
-            {
+            input:{
                 type:String,
-                required:true
+                required:true,
             },
-            output:
-            {
+            output:{
                 type:String,
-                required:true
+                required:true,
             },
-            explaination:
-            {
+            explanation:{
                 type:String,
                 required:true
             }
@@ -50,40 +39,69 @@ const problemSchema = new Schema({
 
     hiddenTestCases:[
         {
-            input:
-            {
+            input:{
                 type:String,
-                required:true
+                required:true,
             },
-            output:
-            {
+            output:{
+                type:String,
+                required:true,
+            }
+        }
+    ],
+
+    startCode: [
+        {
+            language:{
+                type:String,
+                required:true,
+            },
+            initialCode:{
                 type:String,
                 required:true
             }
         }
     ],
-    startCode:[
+
+    referenceSolution:[
         {
-        language:{
-            type:String,
-            required:true,
-        },
-        initialCode:{
-            type:String,
-            required:true
+            language:{
+                type:String,
+                required:true,
+            },
+            completeCode:{
+                type:String,
+                required:true
+            }
         }
-    }
     ],
 
     problemCreator:{
-        type:Schema.Types.ObjectId,//Schema.types gives multiple schemas
-        ref:"user",//we referenced the user schema here
-        required:true,
+        type: Schema.Types.ObjectId,
+        ref:'user',
+        required:true
     }
-    
-   
-});
+})
 
-const Problem = mongoose.mongodel("problem",problemSchema);
+
+const Problem = mongoose.model('problem',problemSchema);
 
 module.exports = Problem;
+
+
+
+
+// const referenceSolution = [
+//     {
+//         language:"c++",
+//         completeCode:"C++ Code"
+//     },
+//     {
+//         language:"java",
+//         completeCode:"java Code"
+//     },
+//     {
+//         language:"js",
+//         completeCode:"JS Code"
+//     },
+// ]

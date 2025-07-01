@@ -1,31 +1,23 @@
+const express = require('express');
 
-const {
-  createProblem,// yes
-  getAllProblems,//no
-  getProblemById,//no
-  updateProblem,//no
-  deleteProblem,//no
-  solvedAllproblembyUser,//no
-} = require("../controllers/userProblem");
-//
-//create
-//fetch
-//update
-//delete
-const express=require('express');//to create a router
-const { get } = require('http');
-const problemRouter=express.Router();
-const adminMiddleware=require("../middleware/adminMiddleware");
+const problemRouter =  express.Router();
+const adminMiddleware = require("../middleware/adminMiddleware")
+const createProblem = require("../controllers/userProblem");
 
-problemRouter.post("/create",adminMiddleware,createProblem);
 
-problemRouter.patch("/:id",updateProblem);
+// Create
+problemRouter.post("/create",adminMiddleware ,createProblem);
+// problemRouter.patch("/:id", updateProblem);
+// problemRouter.delete("/:id",deleteProblem);
 
-problemRouter.delete("/:id",deleteProblem);
 
-//.............................................................
-problemRouter.get("/",getAllProblems);
+// problemRouter.get("/:id",getProblemById);
+// problemRouter.get("/", getAllProblem);
+// problemRouter.get("/user", solvedAllProblembyUser);
 
-problemRouter.get("/user",solvedAllproblembyUser);
 
-problemRouter.get("/:id",getProblemById);
+module.exports = problemRouter;
+
+// fetch
+// update
+// delete 
