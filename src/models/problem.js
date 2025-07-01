@@ -17,7 +17,7 @@ const problemSchema = new Schema({
     },
     tags:{
         type:[String],
-        enum:['array','linkedList','graph','dp'],
+        enum:['array','linkedList','graph','dp','math','multiplication'],
         required:true
     },
     visibleTestCases:[
