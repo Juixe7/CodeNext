@@ -1,16 +1,17 @@
 const axios = require('axios');
 
 
+const getLanguageById = (lang)=>{
 
-const getLanguageById = (lang) => {
-  const map = {
-    "c++": 54,
-    "java": 62,
-    "javascript": 63,
-    
-  };
-  return map[lang]; // ✅ Ensure it returns correct id
-};
+    const language = {
+        "c++":54,
+        "java":62,
+        "javascript":63
+    }
+
+
+    return language[lang.toLowerCase()];
+}
 
 
 const submitBatch = async (submissions)=>{
@@ -23,7 +24,7 @@ const options = {
     base64_encoded: 'false'
   },
   headers: {
-    'x-rapidapi-key':  'ce9e2c394bmshbe7db56a2332644p1a4a3djsne710a9cdd1cc',
+    'x-rapidapi-key': process.env.JUDGE0_KEY,
     'x-rapidapi-host': 'judge0-ce.p.rapidapi.com',
     'Content-Type': 'application/json'
   },
@@ -37,7 +38,8 @@ async function fetchData() {
 		const response = await axios.request(options);
 		return response.data;
 	} catch (error) {
-		console.error(error);
+		console.error("Judge0 submitBatch error:", error);
+		throw error;
 	}
 }
 
@@ -65,7 +67,7 @@ const options = {
     fields: '*'
   },
   headers: {
-    'x-rapidapi-key': 'ce9e2c394bmshbe7db56a2332644p1a4a3djsne710a9cdd1cc',
+    'x-rapidapi-key': process.env.JUDGE0_KEY,
     'x-rapidapi-host': 'judge0-ce.p.rapidapi.com'
   }
 };
@@ -75,7 +77,8 @@ async function fetchData() {
 		const response = await axios.request(options);
 		return response.data;
 	} catch (error) {
-		console.error(error);
+		console.error("Judge0 submitToken error:", error);
+		throw error;
 	}
 }
 

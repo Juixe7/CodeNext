@@ -7,7 +7,7 @@ import { checkAuth } from "./authSlice";
 import { useEffect } from "react";
 import AdminPanel from "./components/AdminPanel";
 import ProblemPage from "./pages/ProblemPage"
-import Admin from "./pages/Admin";
+import Admin from "./pages/Admin"; 
 import AdminDelete from "./components/AdminDelete"
 
 function App(){
