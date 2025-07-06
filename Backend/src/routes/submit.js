@@ -6,4 +6,4 @@ const { submitCode,runCode } = require("../controllers/userSubmission");
 submissionRouter.post("/submit/:id",userMiddleware,submitCode);
 submissionRouter.post("/run/:id",userMiddleware,runCode);
 
-module.exports = {submissionRouter};
+module.exports = submissionRouter;

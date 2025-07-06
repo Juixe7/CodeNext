@@ -1,32 +1,31 @@
 const express = require('express')
-require('dotenv').config();
 const app = express();
-const cors=require('cors');
+require('dotenv').config();
 const main =  require('./config/db')
 const cookieParser =  require('cookie-parser');
 const authRouter = require("./routes/userAuth");
 const redisClient = require('./config/redis');
 const problemRouter = require("./routes/problemCreator");
-const {submissionRouter} =require("./routes/submit");
+const submitRouter = require("./routes/submit")
+const aiRouter = require("./routes/aiChatting")
+const videoRouter = require("./routes/videoCreator");
+const cors = require('cors')
+
+// console.log("Hello")
+
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true 
+}))
 
 app.use(express.json());
 app.use(cookieParser());
-// ...existing code...
-app.use(cors({
-    origin: function(origin, callback) {
-        const allowedOrigins = ['http://localhost:5175', 'http://localhost:5173'];
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true
-}));
-// ...existing code...
+
 app.use('/user',authRouter);
 app.use('/problem',problemRouter);
-app.use('/submission',submissionRouter);
+app.use('/submission',submitRouter);
+app.use('/ai',aiRouter);
+app.use("/video",videoRouter);
 
 
 const InitalizeConnection = async ()=>{
