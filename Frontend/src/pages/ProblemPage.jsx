@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import Editor from '@monaco-editor/react';
-import { useParams } from 'react-router';
+import { useParams, NavLink } from 'react-router';
 import axiosClient from "../utils/axiosClient"
 import SubmissionHistory from "../components/SubmissionHistory"
 import ChatAi from '../components/ChatAi';
 import Editorial from '../components/Editorial';
+import { Code, Play, Send, ArrowLeft, FileText, Video, MessageSquare, History, CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
+import ThemeToggle from '../components/ThemeToggle';
 
 const langMap = {
   cpp: 'C++',
@@ -46,9 +48,8 @@ const ProblemPage = () => {
     };
 
     fetchProblem();
-  }, [problemId, selectedLanguage]); // add selectedLanguage to dependencies
+  }, [problemId, selectedLanguage]);
 
-  // Update code when language changes
   useEffect(() => {
     if (problem) {
       const langDisplay = langMap[selectedLanguage];
@@ -129,60 +130,99 @@ const ProblemPage = () => {
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
-      case 'easy': return 'text-green-500';
-      case 'medium': return 'text-yellow-500';
-      case 'hard': return 'text-red-500';
-      default: return 'text-gray-500';
+      case 'easy': return 'text-success';
+      case 'medium': return 'text-warning';
+      case 'hard': return 'text-error';
+      default: return 'text-base-content';
+    }
+  };
+
+  const getDifficultyBadge = (difficulty) => {
+    switch (difficulty) {
+      case 'easy': return 'badge-success';
+      case 'medium': return 'badge-warning';
+      case 'hard': return 'badge-error';
+      default: return 'badge-neutral';
     }
   };
 
   if (loading && !problem) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100 flex justify-center items-center transition-colors duration-300">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content/70">Loading problem...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex bg-base-100">
+    <div className="h-screen flex bg-base-100 transition-colors duration-300">
       {/* Left Panel */}
       <div className="w-1/2 flex flex-col border-r border-base-300">
+        {/* Header with Back Button */}
+        <div className="bg-base-200 px-4 py-3 border-b border-base-300 transition-colors duration-300">
+          <div className="flex items-center gap-3">
+            <NavLink to="/" className="btn btn-ghost btn-sm">
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </NavLink>
+            <div className="flex-1">
+              {problem && (
+                <div className="flex items-center gap-3">
+                  <h1 className="text-lg font-semibold truncate">{problem.title}</h1>
+                  <div className={`badge ${getDifficultyBadge(problem.difficulty)}`}>
+                    {problem.difficulty}
+                  </div>
+                  <div className="badge badge-outline badge-info">
+                    {problem.tags}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Theme Toggle */}
+            <ThemeToggle size="sm" />
+          </div>
+        </div>
+
         {/* Left Tabs */}
-        <div className="tabs tabs-bordered bg-base-200 px-4">
+        <div className="tabs tabs-bordered bg-base-200 px-4 transition-colors duration-300">
           <button 
             className={`tab ${activeLeftTab === 'description' ? 'tab-active' : ''}`}
             onClick={() => setActiveLeftTab('description')}
           >
+            <FileText className="w-4 h-4 mr-1" />
             Description
           </button>
           <button 
             className={`tab ${activeLeftTab === 'editorial' ? 'tab-active' : ''}`}
             onClick={() => setActiveLeftTab('editorial')}
           >
+            <Video className="w-4 h-4 mr-1" />
             Editorial
           </button>
           <button 
             className={`tab ${activeLeftTab === 'solutions' ? 'tab-active' : ''}`}
             onClick={() => setActiveLeftTab('solutions')}
           >
+            <Code className="w-4 h-4 mr-1" />
             Solutions
           </button>
           <button 
             className={`tab ${activeLeftTab === 'submissions' ? 'tab-active' : ''}`}
             onClick={() => setActiveLeftTab('submissions')}
           >
+            <History className="w-4 h-4 mr-1" />
             Submissions
           </button>
-
           <button 
             className={`tab ${activeLeftTab === 'chatAI' ? 'tab-active' : ''}`}
             onClick={() => setActiveLeftTab('chatAI')}
           >
+            <MessageSquare className="w-4 h-4 mr-1" />
             ChatAI
           </button>
-
-
         </div>
 
         {/* Left Content */}
@@ -190,31 +230,37 @@ const ProblemPage = () => {
           {problem && (
             <>
               {activeLeftTab === 'description' && (
-                <div>
-                  <div className="flex items-center gap-4 mb-6">
-                    <h1 className="text-2xl font-bold">{problem.title}</h1>
-                    <div className={`badge badge-outline ${getDifficultyColor(problem.difficulty)}`}>
-                      {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
-                    </div>
-                    <div className="badge badge-primary">{problem.tags}</div>
-                  </div>
-
+                <div className="space-y-6">
                   <div className="prose max-w-none">
                     <div className="whitespace-pre-wrap text-sm leading-relaxed">
                       {problem.description}
                     </div>
                   </div>
 
-                  <div className="mt-8">
-                    <h3 className="text-lg font-semibold mb-4">Examples:</h3>
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Examples
+                    </h3>
                     <div className="space-y-4">
                       {problem.visibleTestCases.map((example, index) => (
-                        <div key={index} className="bg-base-200 p-4 rounded-lg">
-                          <h4 className="font-semibold mb-2">Example {index + 1}:</h4>
-                          <div className="space-y-2 text-sm font-mono">
-                            <div><strong>Input:</strong> {example.input}</div>
-                            <div><strong>Output:</strong> {example.output}</div>
-                            <div><strong>Explanation:</strong> {example.explanation}</div>
+                        <div key={index} className="card bg-base-200 border border-base-300">
+                          <div className="card-body p-4">
+                            <h4 className="font-semibold mb-3">Example {index + 1}:</h4>
+                            <div className="space-y-2 text-sm font-mono">
+                              <div className="flex gap-2">
+                                <span className="font-semibold text-primary">Input:</span>
+                                <span className="bg-base-100 px-2 py-1 rounded">{example.input}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <span className="font-semibold text-success">Output:</span>
+                                <span className="bg-base-100 px-2 py-1 rounded">{example.output}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <span className="font-semibold text-info">Explanation:</span>
+                                <span className="bg-base-100 px-2 py-1 rounded flex-1">{example.explanation}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -224,49 +270,62 @@ const ProblemPage = () => {
               )}
 
               {activeLeftTab === 'editorial' && (
-                <div className="prose max-w-none">
-                  <h2 className="text-xl font-bold mb-4">Editorial</h2>
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                <div className="space-y-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Video className="w-6 h-6" />
+                    Editorial
+                  </h2>
+                  <div className="prose max-w-none">
                     <Editorial secureUrl={problem.secureUrl} thumbnailUrl={problem.thumbnailUrl} duration={problem.duration}/>
                   </div>
                 </div>
               )}
 
               {activeLeftTab === 'solutions' && (
-                <div>
-                  <h2 className="text-xl font-bold mb-4">Solutions</h2>
+                <div className="space-y-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Code className="w-6 h-6" />
+                    Solutions
+                  </h2>
                   <div className="space-y-6">
                     {problem.referenceSolution?.map((solution, index) => (
-                      <div key={index} className="border border-base-300 rounded-lg">
-                        <div className="bg-base-200 px-4 py-2 rounded-t-lg">
+                      <div key={index} className="card bg-base-200 border border-base-300">
+                        <div className="card-header bg-base-300 px-4 py-3 rounded-t-lg">
                           <h3 className="font-semibold">{problem?.title} - {solution?.language}</h3>
                         </div>
-                        <div className="p-4">
-                          <pre className="bg-base-300 p-4 rounded text-sm overflow-x-auto">
+                        <div className="card-body p-4">
+                          <pre className="bg-base-100 p-4 rounded-lg text-sm overflow-x-auto border">
                             <code>{solution?.completeCode}</code>
                           </pre>
                         </div>
                       </div>
-                    )) || <p className="text-gray-500">Solutions will be available after you solve the problem.</p>}
+                    )) || (
+                      <div className="text-center py-8">
+                        <Code className="w-12 h-12 mx-auto text-base-content/30 mb-4" />
+                        <p className="text-base-content/70">Solutions will be available after you solve the problem.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
               {activeLeftTab === 'submissions' && (
-                <div>
-                  <h2 className="text-xl font-bold mb-4">My Submissions</h2>
-                  <div className="text-gray-500">
-                    <SubmissionHistory problemId={problemId} />
-                  </div>
+                <div className="space-y-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <History className="w-6 h-6" />
+                    My Submissions
+                  </h2>
+                  <SubmissionHistory problemId={problemId} />
                 </div>
               )}
 
               {activeLeftTab === 'chatAI' && (
-                <div className="prose max-w-none">
-                  <h2 className="text-xl font-bold mb-4">CHAT with AI</h2>
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                    <ChatAi problem={problem}></ChatAi>
-                  </div>
+                <div className="space-y-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <MessageSquare className="w-6 h-6" />
+                    Chat with AI
+                  </h2>
+                  <ChatAi problem={problem} />
                 </div>
               )}
             </>
@@ -277,24 +336,27 @@ const ProblemPage = () => {
       {/* Right Panel */}
       <div className="w-1/2 flex flex-col">
         {/* Right Tabs */}
-        <div className="tabs tabs-bordered bg-base-200 px-4">
+        <div className="tabs tabs-bordered bg-base-200 px-4 transition-colors duration-300">
           <button 
             className={`tab ${activeRightTab === 'code' ? 'tab-active' : ''}`}
             onClick={() => setActiveRightTab('code')}
           >
+            <Code className="w-4 h-4 mr-1" />
             Code
           </button>
           <button 
             className={`tab ${activeRightTab === 'testcase' ? 'tab-active' : ''}`}
             onClick={() => setActiveRightTab('testcase')}
           >
-            Testcase
+            <Play className="w-4 h-4 mr-1" />
+            Test Results
           </button>
           <button 
             className={`tab ${activeRightTab === 'result' ? 'tab-active' : ''}`}
             onClick={() => setActiveRightTab('result')}
           >
-            Result
+            <Send className="w-4 h-4 mr-1" />
+            Submission
           </button>
         </div>
 
@@ -303,7 +365,7 @@ const ProblemPage = () => {
           {activeRightTab === 'code' && (
             <div className="flex-1 flex flex-col">
               {/* Language Selector */}
-              <div className="flex justify-between items-center p-4 border-b border-base-300">
+              <div className="flex justify-between items-center p-4 border-b border-base-300 bg-base-200 transition-colors duration-300">
                 <div className="flex gap-2">
                   {['javascript', 'java', 'cpp'].map((lang) => (
                     <button
@@ -350,12 +412,13 @@ const ProblemPage = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="p-4 border-t border-base-300 flex justify-between">
+              <div className="p-4 border-t border-base-300 flex justify-between bg-base-200 transition-colors duration-300">
                 <div className="flex gap-2">
                   <button 
                     className="btn btn-ghost btn-sm"
                     onClick={() => setActiveRightTab('testcase')}
                   >
+                    <Play className="w-4 h-4 mr-1" />
                     Console
                   </button>
                 </div>
@@ -365,6 +428,7 @@ const ProblemPage = () => {
                     onClick={handleRun}
                     disabled={loading}
                   >
+                    <Play className="w-4 h-4 mr-1" />
                     Run
                   </button>
                   <button
@@ -372,6 +436,7 @@ const ProblemPage = () => {
                     onClick={handleSubmitCode}
                     disabled={loading}
                   >
+                    <Send className="w-4 h-4 mr-1" />
                     Submit
                   </button>
                 </div>
@@ -380,26 +445,52 @@ const ProblemPage = () => {
           )}
 
           {activeRightTab === 'testcase' && (
-            <div className="flex-1 p-4 overflow-y-auto">
-              <h3 className="font-semibold mb-4">Test Results</h3>
+            <div className="flex-1 p-6 overflow-y-auto">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Play className="w-5 h-5" />
+                Test Results
+              </h3>
               {runResult ? (
-                <div className={`alert ${runResult.success ? 'alert-success' : 'alert-error'} mb-4`}>
-                  <div>
+                <div className={`alert ${runResult.success ? 'alert-success' : 'alert-error'} mb-6`}>
+                  <div className="w-full">
                     {runResult.success ? (
                       <div>
-                        <h4 className="font-bold">✅ All test cases passed!</h4>
-                        <p className="text-sm mt-2">Runtime: {runResult.runtime+" sec"}</p>
-                        <p className="text-sm">Memory: {runResult.memory+" KB"}</p>
+                        <h4 className="font-bold flex items-center gap-2">
+                          <CheckCircle className="w-5 h-5" />
+                          All test cases passed!
+                        </h4>
+                        <div className="mt-4 flex gap-4 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            Runtime: {runResult.runtime} sec
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Zap className="w-4 h-4" />
+                            Memory: {runResult.memory} KB
+                          </div>
+                        </div>
                         
-                        <div className="mt-4 space-y-2">
+                        <div className="mt-6 space-y-3">
                           {runResult.testCases.map((tc, i) => (
-                            <div key={i} className="bg-base-100 p-3 rounded text-xs">
-                              <div className="font-mono">
-                                <div><strong>Input:</strong> {tc.stdin}</div>
-                                <div><strong>Expected:</strong> {tc.expected_output}</div>
-                                <div><strong>Output:</strong> {tc.stdout}</div>
-                                <div className={'text-green-600'}>
-                                  {'✓ Passed'}
+                            <div key={i} className="card bg-base-100 border border-base-300">
+                              <div className="card-body p-4">
+                                <div className="font-mono text-xs space-y-2">
+                                  <div className="flex gap-2">
+                                    <span className="font-semibold text-primary">Input:</span>
+                                    <span className="bg-base-200 px-2 py-1 rounded">{tc.stdin}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-semibold text-success">Expected:</span>
+                                    <span className="bg-base-200 px-2 py-1 rounded">{tc.expected_output}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-semibold text-info">Output:</span>
+                                    <span className="bg-base-200 px-2 py-1 rounded">{tc.stdout}</span>
+                                  </div>
+                                  <div className="text-success font-semibold flex items-center gap-1">
+                                    <CheckCircle className="w-4 h-4" />
+                                    ✓ Passed
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -408,16 +499,31 @@ const ProblemPage = () => {
                       </div>
                     ) : (
                       <div>
-                        <h4 className="font-bold">❌ Error</h4>
-                        <div className="mt-4 space-y-2">
+                        <h4 className="font-bold flex items-center gap-2">
+                          <XCircle className="w-5 h-5" />
+                          Error
+                        </h4>
+                        <div className="mt-6 space-y-3">
                           {runResult.testCases.map((tc, i) => (
-                            <div key={i} className="bg-base-100 p-3 rounded text-xs">
-                              <div className="font-mono">
-                                <div><strong>Input:</strong> {tc.stdin}</div>
-                                <div><strong>Expected:</strong> {tc.expected_output}</div>
-                                <div><strong>Output:</strong> {tc.stdout}</div>
-                                <div className={tc.status_id==3 ? 'text-green-600' : 'text-red-600'}>
-                                  {tc.status_id==3 ? '✓ Passed' : '✗ Failed'}
+                            <div key={i} className="card bg-base-100 border border-base-300">
+                              <div className="card-body p-4">
+                                <div className="font-mono text-xs space-y-2">
+                                  <div className="flex gap-2">
+                                    <span className="font-semibold text-primary">Input:</span>
+                                    <span className="bg-base-200 px-2 py-1 rounded">{tc.stdin}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-semibold text-success">Expected:</span>
+                                    <span className="bg-base-200 px-2 py-1 rounded">{tc.expected_output}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-semibold text-info">Output:</span>
+                                    <span className="bg-base-200 px-2 py-1 rounded">{tc.stdout}</span>
+                                  </div>
+                                  <div className={`font-semibold flex items-center gap-1 ${tc.status_id==3 ? 'text-success' : 'text-error'}`}>
+                                    {tc.status_id==3 ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                                    {tc.status_id==3 ? '✓ Passed' : '✗ Failed'}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -428,31 +534,41 @@ const ProblemPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-gray-500">
-                  Click "Run" to test your code with the example test cases.
+                <div className="text-center py-12">
+                  <Play className="w-12 h-12 mx-auto text-base-content/30 mb-4" />
+                  <p className="text-base-content/70">Click "Run" to test your code with the example test cases.</p>
                 </div>
               )}
             </div>
           )}
 
           {activeRightTab === 'result' && (
-            <div className="flex-1 p-4 overflow-y-auto">
-              <h3 className="font-semibold mb-4">Submission Result</h3>
+            <div className="flex-1 p-6 overflow-y-auto">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Send className="w-5 h-5" />
+                Submission Result
+              </h3>
               {submitResult ? (
                 <div className={`alert ${submitResult.accepted ? 'alert-success' : 'alert-error'}`}>
-                  <div>
+                  <div className="w-full">
                     {submitResult.accepted ? (
                       <div>
-                        <h4 className="font-bold text-lg">🎉 Accepted</h4>
+                        <h4 className="font-bold text-lg flex items-center gap-2">
+                          <CheckCircle className="w-6 h-6" />
+                          🎉 Accepted
+                        </h4>
                         <div className="mt-4 space-y-2">
                           <p>Test Cases Passed: {submitResult.passedTestCases}/{submitResult.totalTestCases}</p>
-                          <p>Runtime: {submitResult.runtime + " sec"}</p>
-                          <p>Memory: {submitResult.memory + "KB"} </p>
+                          <p>Runtime: {submitResult.runtime} sec</p>
+                          <p>Memory: {submitResult.memory} KB</p>
                         </div>
                       </div>
                     ) : (
                       <div>
-                        <h4 className="font-bold text-lg">❌ {submitResult.error}</h4>
+                        <h4 className="font-bold text-lg flex items-center gap-2">
+                          <XCircle className="w-6 h-6" />
+                          ❌ {submitResult.error}
+                        </h4>
                         <div className="mt-4 space-y-2">
                           <p>Test Cases Passed: {submitResult.passedTestCases}/{submitResult.totalTestCases}</p>
                         </div>
@@ -461,8 +577,9 @@ const ProblemPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-gray-500">
-                  Click "Submit" to submit your solution for evaluation.
+                <div className="text-center py-12">
+                  <Send className="w-12 h-12 mx-auto text-base-content/30 mb-4" />
+                  <p className="text-base-content/70">Click "Submit" to submit your solution for evaluation.</p>
                 </div>
               )}
             </div>
