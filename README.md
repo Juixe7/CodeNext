@@ -81,4 +81,4 @@ This makes CodeRoad more than a coding platform—it’s a personal coding assis
 
 1. **Clone the repository**  
    ```bash
-   git clone https://github.com/yourusername/coderoad.git
+   git clone https://github.com/AkhilK004/coderoad.git
