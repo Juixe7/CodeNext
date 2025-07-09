@@ -13,10 +13,23 @@ const cors = require('cors')
 
 // console.log("Hello")
 
+// Allow local dev and deployed Vercel frontend
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://coderoad-frontend-fowp7z2sl-akhils-projects-7c00dc14.vercel.app'
+];
+
+app.set('trust proxy', 1);
+
 app.use(cors({
-    origin: 'http://localhost:5173',
-    
-    credentials: true 
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
 }))
 
 app.use(express.json());

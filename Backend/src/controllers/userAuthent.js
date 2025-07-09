@@ -55,7 +55,7 @@ const login = async (req,res)=>{
 
         const user = await User.findOne({emailId});
 
-        const match = bcrypt.compare(password,user.password);
+        const match = await bcrypt.compare(password,user.password);
 
         if(!match)
             throw new Error("Invalid Credentials");
@@ -99,7 +99,12 @@ const logout = async(req,res)=>{
     //    Token add kar dung Redis ke blockList
     //    Cookies ko clear kar dena.....
 
-    res.cookie("token",null,{expires: new Date(Date.now())});
+    res.cookie("token", "", {
+      expires: new Date(0),
+      httpOnly: true,
+      sameSite: "none",
+      secure: true
+    });
     res.send("Logged Out Succesfully");
 
     }
