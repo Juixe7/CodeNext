@@ -1,7 +1,5 @@
-const { error } = require("console");
+
 const mongoose = require("mongoose");
-const { type } = require("os");
-const { memo } = require("react");
 const{Schema} = mongoose;
 
 const submissionSchema = new Schema({
