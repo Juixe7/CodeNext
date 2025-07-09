@@ -105,7 +105,8 @@ const submitCode = async (req,res)=>{
       totalTestCases: submittedResult.testCasesTotal,
       passedTestCases: testCasesPassed,
       runtime,
-      memory
+      memory,
+      error: errorMessage
     });
        
     }

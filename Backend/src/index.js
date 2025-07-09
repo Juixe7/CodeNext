@@ -14,7 +14,7 @@ const cors = require('cors')
 // console.log("Hello")
 
 app.use(cors({
-    origin: 'http://localhost:process.env.CLIENT_PORT,',
+    origin: 'http://localhost:5173',
     
     credentials: true 
 }))
@@ -31,10 +31,23 @@ app.use("/video",videoRouter);
 
 const InitalizeConnection = async ()=>{
     try{
-
-        await Promise.all([main(),redisClient.connect()]);
+        await main();
         console.log("DB Connected");
-        
+
+        // connect to redis but don't block server start
+        redisClient.connect().then(()=>{
+            console.log("Redis connected");
+        }).catch((err)=>{
+            console.error("Redis connect error:", err && err.message ? err.message : err);
+        });
+
+        redisClient.on('reconnecting', ()=>{
+            console.warn("Redis reconnecting...");
+        });
+        redisClient.on('ready', ()=>{
+            console.log("Redis ready");
+        });
+
         app.listen(process.env.PORT, ()=>{
             console.log("Server listening at port number: "+ process.env.PORT);
         })
