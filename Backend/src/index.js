@@ -35,6 +35,15 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Server is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.use('/user', authRouter);
 app.use('/problem', problemRouter);
@@ -44,33 +53,42 @@ app.use('/video', videoRouter);
 
 const initializeConnection = async () => {
   try {
+    console.log("🚀 Starting server initialization...");
+    
     // Validate environment variables first
     validateEnvironment();
     
+    console.log("📊 Connecting to MongoDB...");
     await main(); // MongoDB connection
-    console.log("DB Connected");
+    console.log("✅ DB Connected");
 
+    console.log("🔴 Connecting to Redis...");
     // connect to redis but don't block server start
     redisClient.connect().then(()=>{
-        console.log("Redis connected");
+        console.log("✅ Redis connected");
     }).catch((err)=>{
-        console.error("Redis connect error:", err && err.message ? err.message : err);
+        console.error("❌ Redis connect error:", err && err.message ? err.message : err);
+        console.log("⚠️  Continuing without Redis...");
     });
 
     redisClient.on('reconnecting', ()=>{
-        console.warn("Redis reconnecting...");
+        console.warn("🔄 Redis reconnecting...");
     });
     redisClient.on('ready', ()=>{
-        console.log("Redis ready");
+        console.log("✅ Redis ready");
     });
 
     const PORT = process.env.PORT || 3000;
+    console.log(`🌐 Starting server on port ${PORT}...`);
+    
     app.listen(PORT, ()=>{
-        console.log("Server listening at port number: "+ PORT);
+        console.log(`🎉 Server successfully listening at port number: ${PORT}`);
+        console.log("🚀 Application is ready!");
     })
 
   } catch (err) {
-    console.error("Initialization Error:", err.message);
+    console.error("💥 Initialization Error:", err.message);
+    console.error("📋 Full error details:", err);
     process.exit(1);
   }
 };
