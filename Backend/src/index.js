@@ -36,6 +36,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Health check route
+// Root route for testing / live URL
+
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
@@ -43,6 +45,16 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+app.get('/', (req, res) => {
+    res.status(200).json({
+      status: 'OK',
+      message: 'API is running. Use /health for server check or /user, /problem, etc. for endpoints.',
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  
 
 // Routes
 app.use('/user', authRouter);
