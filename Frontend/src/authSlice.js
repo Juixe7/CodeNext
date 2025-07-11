@@ -1,12 +1,27 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosClient from './utils/axiosClient'
 
-const getErrorPayload = (error) => ({
-  message: error.message,
-  code: error.code,
-  status: error.response?.status,
-  data: error.response?.data,
-});
+const getErrorPayload = (error) => {
+  console.error('🚨 Auth Error:', error);
+  
+  // Network error (no response)
+  if (!error.response) {
+    return {
+      message: 'Network Error: Unable to connect to server. Please check your internet connection.',
+      code: error.code || 'NETWORK_ERROR',
+      status: null,
+      data: null,
+    };
+  }
+  
+  // Server responded with error
+  return {
+    message: error.response?.data?.message || error.message || 'Something went wrong',
+    code: error.code,
+    status: error.response?.status,
+    data: error.response?.data,
+  };
+};
 
 export const registerUser = createAsyncThunk(
   'auth/register',
