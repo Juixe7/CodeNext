@@ -18,8 +18,24 @@ const allowedOrigins = [
     'http://localhost:5173',
     'https://coderoad-frontend-fowp7z2sl-akhils-projects-7c00dc14.vercel.app',
     'https://road-code-eey1gvc9t-akhils-projects-7c00dc14.vercel.app',
-    'https://road-code-q17iukdfs-akhils-projects-7c00dc14.vercel.app'
+    'https://road-code-q17iukdfs-akhils-projects-7c00dc14.vercel.app',
+    'https://road-code-3rkae8wfb-akhils-projects-7c00dc14.vercel.app'
 ];
+
+// Function to check if origin is allowed (including dynamic Vercel URLs)
+const isOriginAllowed = (origin) => {
+    // Check exact matches
+    if (allowedOrigins.includes(origin)) {
+        return true;
+    }
+    
+    // Allow any Vercel preview URL for this project
+    if (origin && origin.includes('vercel.app') && origin.includes('akhils-projects')) {
+        return true;
+    }
+    
+    return false;
+};
 
 app.set('trust proxy', 1);
 
@@ -33,7 +49,7 @@ app.use(cors({
             return callback(null, true);
         }
         
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        if (isOriginAllowed(origin)) {
             console.log('✅ Origin allowed:', origin);
             return callback(null, true);
         }
