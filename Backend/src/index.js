@@ -16,7 +16,8 @@ const videoRouter = require('./routes/videoCreator');
 // Allow local dev and deployed Vercel frontend
 const allowedOrigins = [
     'http://localhost:5173',
-    'https://coderoad-frontend-fowp7z2sl-akhils-projects-7c00dc14.vercel.app'
+    'https://coderoad-frontend-fowp7z2sl-akhils-projects-7c00dc14.vercel.app',
+    'https://road-code-eey1gvc9t-akhils-projects-7c00dc14.vercel.app'
 ];
 
 app.set('trust proxy', 1);
