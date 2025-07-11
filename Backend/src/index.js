@@ -17,18 +17,29 @@ const videoRouter = require('./routes/videoCreator');
 const allowedOrigins = [
     'http://localhost:5173',
     'https://coderoad-frontend-fowp7z2sl-akhils-projects-7c00dc14.vercel.app',
-    'https://road-code-eey1gvc9t-akhils-projects-7c00dc14.vercel.app'
+    'https://road-code-eey1gvc9t-akhils-projects-7c00dc14.vercel.app',
+    'https://road-code-q17iukdfs-akhils-projects-7c00dc14.vercel.app'
 ];
 
 app.set('trust proxy', 1);
 
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        console.log('🌐 CORS request from origin:', origin);
+        console.log('✅ Allowed origins:', allowedOrigins);
+        
+        if (!origin) {
+            console.log('⚠️  No origin header (likely same-origin request)');
             return callback(null, true);
         }
-        return callback(new Error('Not allowed by CORS'));
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            console.log('✅ Origin allowed:', origin);
+            return callback(null, true);
+        }
+        
+        console.log('❌ Origin not allowed:', origin);
+        return callback(new Error(`Origin ${origin} not allowed by CORS`));
     },
     credentials: true
 }));
