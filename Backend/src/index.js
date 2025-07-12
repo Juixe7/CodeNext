@@ -15,13 +15,13 @@ const videoRouter = require('./routes/videoCreator');
 
 // Allow local dev and deployed Vercel frontend
 const allowedOrigins = [
-    'http://localhost:5173',
-    'https://coderoad-frontend-fowp7z2sl-akhils-projects-7c00dc14.vercel.app',
-    'https://road-code-eey1gvc9t-akhils-projects-7c00dc14.vercel.app',
-    'https://road-code-q17iukdfs-akhils-projects-7c00dc14.vercel.app',
-    'https://road-code-3rkae8wfb-akhils-projects-7c00dc14.vercel.app'
+  'http://localhost:5173',
+  'https://coderoad-frontend.vercel.app',          // ✅ add this
+  'https://coderoad-frontend-fowp7z2sl-akhils-projects-7c00dc14.vercel.app',
+  'https://road-code-eey1gvc9t-akhils-projects-7c00dc14.vercel.app',
+  'https://road-code-q17iukdfs-akhils-projects-7c00dc14.vercel.app',
+  'https://road-code-3rkae8wfb-akhils-projects-7c00dc14.vercel.app'
 ];
-
 // Function to check if origin is allowed (including dynamic Vercel URLs)
 const isOriginAllowed = (origin) => {
     // Check exact matches
