@@ -46,7 +46,7 @@ function Admin() {
         <div className="flex-1">
           <NavLink to="/" className="btn btn-ghost text-xl font-bold">
             <Home className="w-6 h-6 mr-2 text-primary" />
-            CodeMaster
+            Roadcode
           </NavLink>
         </div>
         <div className="flex-none gap-4">

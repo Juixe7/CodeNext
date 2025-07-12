@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, NavLink } from 'react-router';
-import { registerUser } from '../authSlice';
+import { registerUser, clearError } from '../authSlice';
 import { Code, Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -27,12 +27,15 @@ function Signup() {
   } = useForm({ resolver: zodResolver(signupSchema) });
 
   useEffect(() => {
+    // Clear any stale errors when visiting the page
+    dispatch(clearError());
     if (isAuthenticated) {
       navigate('/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [dispatch, isAuthenticated, navigate]);
 
   const onSubmit = (data) => {
+    dispatch(clearError());
     dispatch(registerUser(data));
   };
 
@@ -52,7 +55,7 @@ function Signup() {
                 <Code className="w-8 h-8 text-primary" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-base-content mb-2">Join CodeMaster</h1>
+            <h1 className="text-3xl font-bold text-base-content mb-2">Join RoadCode</h1>
             <p className="text-base-content/70">Start your coding journey today</p>
           </div>
 

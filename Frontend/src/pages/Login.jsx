@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, NavLink } from 'react-router'; 
-import { loginUser } from "../authSlice";
+import { loginUser, clearError } from "../authSlice";
 import { useEffect, useState } from 'react';
 import { Code, Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
@@ -25,12 +25,15 @@ function Login() {
   } = useForm({ resolver: zodResolver(loginSchema) });
 
   useEffect(() => {
+    // Clear any stale errors when visiting the page
+    dispatch(clearError());
     if (isAuthenticated) {
       navigate('/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [dispatch, isAuthenticated, navigate]);
 
   const onSubmit = (data) => {
+    dispatch(clearError());
     dispatch(loginUser(data));
   };
 
