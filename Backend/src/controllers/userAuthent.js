@@ -6,83 +6,102 @@ const jwt = require('jsonwebtoken');
 const Submission = require("../models/submission")
 
 
-const register = async (req,res)=>{
-    
-    try{
-        // validate the data;
-      validate(req.body); 
-      const {firstName, emailId, password}  = req.body;
+const register = async (req, res) => {
+  try {
+    validate(req.body);
 
-      req.body.password = await bcrypt.hash(password, 10);
-      req.body.role = 'user'
-    //
-    
-     const user =  await User.create(req.body);
-     const token =  jwt.sign({_id:user._id , emailId:emailId, role:'user'},process.env.JWT_KEY,{expiresIn: 60*60});
-     const reply = {
+    const { firstName, emailId, password } = req.body;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      firstName,
+      emailId,
+      password: hashedPassword,
+      role: "user",
+    });
+
+    const token = jwt.sign(
+      { _id: user._id, emailId: user.emailId, role: user.role },
+      process.env.JWT_KEY,
+      { expiresIn: "1h" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,        // REQUIRED (Render HTTPS)
+      sameSite: "None",    // 🔥 CASE SENSITIVE
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.status(201).json({
+      user: {
         firstName: user.firstName,
         emailId: user.emailId,
         _id: user._id,
-        role:user.role,
+        role: user.role,
+      },
+      message: "Registered successfully",
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      message: err.message || "Registration failed",
+    });
+  }
+};
+
+
+
+const login = async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    if (!emailId || !password) {
+      return res.status(400).json({ message: "Invalid credentials" });
     }
-   res.cookie("token", token, {
-     maxAge: 60 * 60 * 1000,
-     httpOnly: true,
-     sameSite: "none",
-     secure: true,
-   });
 
-     res.status(201).json({
-        user:reply,
-        message:"Loggin Successfully"
-    })
+    const user = await User.findOne({ emailId });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
-    catch(err){
-        res.status(400).send("Error: "+err);
+
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
-}
 
+    const token = jwt.sign(
+      { _id: user._id, emailId: user.emailId, role: user.role },
+      process.env.JWT_KEY,
+      { expiresIn: "1h" }
+    );
 
-const login = async (req,res)=>{
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,        // REQUIRED
+      sameSite: "None",    // 🔥 REQUIRED
+      maxAge: 60 * 60 * 1000,
+    });
 
-    try{
-        const {emailId, password} = req.body;
+    res.status(200).json({
+      user: {
+        firstName: user.firstName,
+        emailId: user.emailId,
+        _id: user._id,
+        role: user.role,
+      },
+      message: "Login successful",
+    });
 
-        if(!emailId)
-            throw new Error("Invalid Credentials");
-        if(!password)
-            throw new Error("Invalid Credentials");
-
-        const user = await User.findOne({emailId});
-
-        const match = await bcrypt.compare(password,user.password);
-
-        if(!match)
-            throw new Error("Invalid Credentials");
-
-        const reply = {
-            firstName: user.firstName,
-            emailId: user.emailId,
-            _id: user._id,
-            role:user.role,
-        }
-
-        const token =  jwt.sign({_id:user._id , emailId:emailId, role:user.role},process.env.JWT_KEY,{expiresIn: 60*60});
-       res.cookie("token", token, {
-         maxAge: 60 * 60 * 1000,
-         httpOnly: true,
-         sameSite: "none",
-         secure: true,
-       });
-        res.status(201).json({
-            user:reply,
-            message:"Loggin Successfully"
-        })
-    }
-    catch(err){
-        res.status(401).send("Error: "+err);
-    }
-}
+  } catch (err) {
+    res.status(500).json({
+      message: "Login failed",
+    });
+  }
+};
 
 
 // logOut feature
