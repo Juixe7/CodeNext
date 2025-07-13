@@ -63,7 +63,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // 🔥 THIS LINE FIXES YOUR ISSUE (PRE-FLIGHT)
-app.options("*", cors(corsOptions));
+app.options("*/", cors(corsOptions));
 
 /* --------------------------------------------------
    MIDDLEWARE
