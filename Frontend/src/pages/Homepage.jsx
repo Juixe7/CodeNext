@@ -5,6 +5,7 @@ import axiosClient from '../utils/axiosClient';
 import { logoutUser } from '../authSlice';
 import { Code, Trophy, Filter, Search, User, LogOut, Settings, BookOpen } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
+import logoRoadCode from '../assets/logoRoadCode.jpg';
 
 function Homepage() {
   const dispatch = useDispatch();
@@ -80,9 +81,13 @@ function Homepage() {
       {/* Enhanced Navigation Bar */}
       <nav className="navbar bg-base-100 shadow-lg border-b border-base-300 px-6 transition-colors duration-300">
         <div className="flex-1">
-          <NavLink to="/" className="btn btn-ghost text-xl font-bold">
-            <Code className="w-6 h-6 mr-2 text-primary" />
-            ROAD-CODE
+          <NavLink to="/" className="btn btn-ghost text-xl font-bold flex items-center gap-2 hover:bg-base-200 transition-colors">
+            <img 
+              src={logoRoadCode} 
+              alt="RoadCode Logo" 
+              className="w-10 h-10 rounded-full object-cover shadow-md"
+            />
+            <span className="hidden sm:inline">ROAD-CODE</span>
           </NavLink>
         </div>
         

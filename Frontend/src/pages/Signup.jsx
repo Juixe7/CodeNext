@@ -7,6 +7,7 @@ import { useNavigate, NavLink } from 'react-router';
 import { registerUser, clearError } from '../authSlice';
 import { Code, Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
+import logoRoadCode from '../assets/logoRoadCode.jpg';
 
 const signupSchema = z.object({
   firstName: z.string().min(3, "Minimum character should be 3"),
@@ -51,8 +52,12 @@ function Signup() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Code className="w-8 h-8 text-primary" />
+              <div className="bg-primary/10 p-2 rounded-full shadow-lg">
+                <img 
+                  src={logoRoadCode} 
+                  alt="RoadCode Logo" 
+                  className="w-16 h-16 rounded-full object-cover"
+                />
               </div>
             </div>
             <h1 className="text-3xl font-bold text-base-content mb-2">Join RoadCode</h1>

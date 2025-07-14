@@ -7,6 +7,7 @@ import { loginUser, clearError } from "../authSlice";
 import { useEffect, useState } from 'react';
 import { Code, Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
+import logoRoadCode from '../assets/logoRoadCode.jpg';
 
 const loginSchema = z.object({
   emailId: z.string().email("Invalid Email"),
@@ -49,8 +50,12 @@ function Login() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Code className="w-8 h-8 text-primary" />
+              <div className="bg-primary/10 p-2 rounded-full shadow-lg">
+                <img 
+                  src={logoRoadCode} 
+                  alt="RoadCode Logo" 
+                  className="w-16 h-16 rounded-full object-cover"
+                />
               </div>
             </div>
             <h1 className="text-3xl font-bold text-base-content mb-2">Welcome Back</h1>
