@@ -61,13 +61,21 @@ This makes CodeRoad more than a coding platform—it’s a personal coding assis
 ## 🖼 Demo & Screenshots
 
 ### Home Page
-![Home Page](path-to-your-image/homepage.png)
+<img width="1244" height="984" alt="Screenshot 2025-12-24 170225" src="https://github.com/user-attachments/assets/26357c3c-2ee9-433d-955c-bc5faf1e4a58" />
+<img width="1012" height="905" alt="Screenshot 2025-12-24 170241" src="https://github.com/user-attachments/assets/8e64064b-24cc-40ef-ace5-94231e2479ba" />
+<img width="1840" height="833" alt="Screenshot 2025-12-24 170305" src="https://github.com/user-attachments/assets/50ef1380-ee7f-4368-af9b-10995b618a4d" />
+
 
 ### Problem Editor (Monaco Editor)
-![Editor](path-to-your-image/editor.png)
+)<img width="1905" height="925" alt="Screenshot 2025-12-24 170328" src="https://github.com/user-attachments/assets/51bd0602-b532-41ab-b337-c2014ef793b0" />
+<img width="1856" height="914" alt="Screenshot 2025-12-24 170430" src="https://github.com/user-attachments/assets/5ab5aa0e-86a7-45ec-91f2-5c04d3f511f4" />
+<img width="912" height="738" alt="Screenshot 2025-12-24 170509" src="https://github.com/user-attachments/assets/a2814a32-30fc-4e25-9ce3-2bb33e580fd9" />
+
+<img width="1882" height="914" alt="Screenshot 2025-12-24 170528" src="https://github.com/user-attachments/assets/1f6e81e5-1bc6-40da-8548-4452b36f1ff2" />
 
 ### AI Chatbot Interaction
-![AI Chatbot](path-to-your-image/chatbot.png)
+<img width="905" height="836" alt="Screenshot 2025-12-24 170542" src="https://github.com/user-attachments/assets/3d6ce48a-4e74-4e05-a1f5-39fd3bdaf1ba" />
+
 
 ### Video Tutorial Integration
 ![Video Tutorial](path-to-your-image/video-tutorial.png)
