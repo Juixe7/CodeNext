@@ -7,7 +7,7 @@ import { loginUser, clearError } from "../authSlice";
 import { useEffect, useState } from 'react';
 import { Code, Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
-import logoRoadCode from '../assets/logoRoadCode.jpg';
+import logoRoadCode from '../assets/RoadCodeLogo.jpg';
 
 const loginSchema = z.object({
   emailId: z.string().email("Invalid Email"),

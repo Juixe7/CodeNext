@@ -5,7 +5,7 @@ import axiosClient from '../utils/axiosClient';
 import { logoutUser } from '../authSlice';
 import { Code, Trophy, Filter, Search, User, LogOut, Settings, BookOpen } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
-import logoRoadCode from '../assets/logoRoadCode.jpg';
+import logoRoadCode from '../assets/RoadCodeLogo.jpg';
 
 function Homepage() {
   const dispatch = useDispatch();

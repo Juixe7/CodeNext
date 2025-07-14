@@ -7,7 +7,7 @@ import { useNavigate, NavLink } from 'react-router';
 import { registerUser, clearError } from '../authSlice';
 import { Code, Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
-import logoRoadCode from '../assets/logoRoadCode.jpg';
+import logoRoadCode from '../assets/RoadCodeLogo.jpg';
 
 const signupSchema = z.object({
   firstName: z.string().min(3, "Minimum character should be 3"),
