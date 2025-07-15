@@ -85,8 +85,47 @@ This makes CodeRoad more than a coding platform—it’s a personal coding assis
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Try CodeRoad Live
 
-1. **Clone the repository**  
-   ```bash
-   git clone https://github.com/AkhilK004/coderoad.git
+👉 **Live Demo:** **https://road-code-tau.vercel.app/**
+
+CodeRoad is fully deployed and production-ready.  
+Explore real-time code execution, AI-powered assistance, and an interactive coding environment—no setup required.
+
+> 💡 **Tip:** For the best experience, use a desktop browser.
+
+---
+
+## 🔐 Environment Variables Setup
+
+To run **CodeRoad** locally, configure the following environment variables.
+
+### 📁 Backend `.env` File
+
+Create a `.env` file inside the `backend` directory:
+
+```bash
+backend/.env
+
+# Server
+PORT=3000
+
+# Database
+DB_CONNECT_STRING=mongodb+srv://<username>:<password>@cluster.mongodb.net/<dbname>
+
+# Authentication
+JWT_KEY=your_jwt_secret
+
+# Cache
+REDIS_PASS=your_redis_password
+
+# Code Execution
+JUDGE0_KEY=your_judge0_api_key
+
+# AI Chatbot
+GEMINI_KEY=your_google_gemini_api_key
+
+# Cloud Storage (Video Tutorials)
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
