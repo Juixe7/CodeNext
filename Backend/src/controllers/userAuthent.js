@@ -106,29 +106,38 @@ const login = async (req, res) => {
 
 // logOut feature
 
-const logout = async(req,res)=>{
+const logout = async (req, res) => {
 
-    try{
-        const {token} = req.cookies;
-        const payload = jwt.decode(token);
+    try {
+        const { token } = req.cookies;
 
+        if (token) {
+            const { isRedisReady } = require("../config/redis");
+            if (isRedisReady()) {
+                const payload = jwt.decode(token);
+                if (payload && payload.exp) {
+                    await redisClient.set(`token:${token}`, 'Blocked');
+                    await redisClient.expireAt(`token:${token}`, payload.exp);
+                }
+            } else {
+                // Redis is down — cookie will still be cleared so the user is logged
+                // out on the client. The token won't be blocklisted, but it expires
+                // in 1h anyway due to JWT TTL.
+                console.warn("⚠️  Redis unavailable during logout — token not added to blocklist. JWT TTL will handle expiry.");
+            }
+        }
 
-        await redisClient.set(`token:${token}`,'Blocked');
-        await redisClient.expireAt(`token:${token}`,payload.exp);
-    //    Token add kar dung Redis ke blockList
-    //    Cookies ko clear kar dena.....
-
-    res.cookie("token", "", {
-      expires: new Date(0),
-      httpOnly: true,
-      sameSite: "none",
-      secure: true
-    });
-    res.send("Logged Out Succesfully");
+        res.cookie("token", "", {
+            expires: new Date(0),
+            httpOnly: true,
+            sameSite: "none",
+            secure: true
+        });
+        res.send("Logged Out Successfully");
 
     }
-    catch(err){
-       res.status(503).send("Error: "+err);
+    catch (err) {
+        res.status(503).send("Error: " + err);
     }
 }
 

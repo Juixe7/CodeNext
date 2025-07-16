@@ -56,7 +56,13 @@ export const checkAuth = createAsyncThunk(
       return data.user;
     } catch (error) {
       if (error.response?.status === 401) {
-        return rejectWithValue(null); // Special case for no session
+        return rejectWithValue(null); // No active session — redirect to login
+      }
+      // Network/cold-start error: silently treat as "not logged in" so the
+      // user lands on /login without a scary error banner.
+      if (!error.response) {
+        console.warn('⏳ Auth check failed (server may be waking up). Treating as unauthenticated.');
+        return rejectWithValue(null);
       }
       return rejectWithValue(getErrorPayload(error));
     }
@@ -136,7 +142,8 @@ const authSlice = createSlice({
       })
       .addCase(checkAuth.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || 'Something went wrong';
+        // null payload = no session or cold-start timeout → silent redirect, no error banner
+        state.error = action.payload ? (action.payload.message || 'Something went wrong') : null;
         state.isAuthenticated = false;
         state.user = null;
       })

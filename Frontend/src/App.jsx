@@ -4,7 +4,7 @@ import Signup from "./pages/Signup";
 import Homepage from "./pages/Homepage";
 import { useDispatch, useSelector } from 'react-redux';
 import { checkAuth } from "./authSlice";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AdminPanel from "./components/AdminPanel";
 import ProblemPage from "./pages/ProblemPage"
 import Admin from "./pages/Admin";
@@ -12,16 +12,26 @@ import AdminVideo from "./components/AdminVideo"
 import AdminDelete from "./components/AdminDelete"
 import AdminUpload from "./components/AdminUpload"
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { pingServer } from "./utils/axiosClient";
 
 function App(){
-  
+  const [serverPinged, setServerPinged] = useState(false);
   const dispatch = useDispatch();
   const {isAuthenticated,user,loading} = useSelector((state)=>state.auth);
 
-  // check initial authentication
   useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
+    // Ping the server first to wake the Render dyno, then check auth.
+    // This prevents a 10-second timeout on cold starts.
+    pingServer();
+    setServerPinged(true);
+  }, []);
+
+  // Only dispatch checkAuth after we've sent the wake-up ping
+  useEffect(() => {
+    if (serverPinged) {
+      dispatch(checkAuth());
+    }
+  }, [dispatch, serverPinged]);
   
   if (loading) {
     return (
@@ -29,6 +39,7 @@ function App(){
         <div className="text-center">
           <span className="loading loading-spinner loading-lg text-primary"></span>
           <p className="mt-4 text-base-content/70">Loading your coding journey...</p>
+          <p className="mt-2 text-base-content/40 text-sm">If this is your first visit in a while, the server may be waking up (up to 60s).</p>
         </div>
       </div>
     );
