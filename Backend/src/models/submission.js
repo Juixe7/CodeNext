@@ -43,7 +43,10 @@ const submissionSchema = new Schema({
         type:Number,
         default:0
     },
-
+    testCasesTotal:{
+        type:Number,
+        default:0
+    }
 })
 
 const Submission = mongoose.model('submission',submissionSchema);

@@ -29,6 +29,12 @@ const problemSchema = z.object({
       initialCode: z.string().min(1, 'Initial code is required')
     })
   ).length(3, 'All three languages required'),
+  driverCode: z.array(
+    z.object({
+      language: z.enum(['C++', 'Java', 'JavaScript']),
+      code: z.string().min(1, 'Driver code is required')
+    })
+  ).length(3, 'All three languages required'),
   referenceSolution: z.array(
     z.object({
       language: z.enum(['C++', 'Java', 'JavaScript']),
@@ -51,6 +57,11 @@ function AdminPanel() {
         { language: 'C++', initialCode: '' },
         { language: 'Java', initialCode: '' },
         { language: 'JavaScript', initialCode: '' }
+      ],
+      driverCode: [
+        { language: 'C++', code: '' },
+        { language: 'Java', code: '' },
+        { language: 'JavaScript', code: '' }
       ],
       referenceSolution: [
         { language: 'C++', completeCode: '' },
@@ -267,6 +278,20 @@ function AdminPanel() {
                       {...register(`startCode.${index}.initialCode`)}
                       className="w-full bg-transparent font-mono"
                       rows={6}
+                    />
+                  </pre>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Driver Code (Hidden Parser)</span>
+                  </label>
+                  <pre className="bg-base-300 p-4 rounded-lg">
+                    <textarea
+                      {...register(`driverCode.${index}.code`)}
+                      className="w-full bg-transparent font-mono"
+                      rows={6}
+                      placeholder="e.g. int main() { ... cin >> ... }"
                     />
                   </pre>
                 </div>

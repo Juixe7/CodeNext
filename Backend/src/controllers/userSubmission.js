@@ -40,8 +40,17 @@ const submitCode = async (req,res)=>{
     
     const languageId = getLanguageById(language);
    
+    // Stitch user code and driver code together
+    let finalCode = code;
+    if (problem.driverCode && problem.driverCode.length > 0) {
+        const driver = problem.driverCode.find(d => d.language === language || d.language.toLowerCase() === language.toLowerCase());
+        if (driver && driver.code) {
+            finalCode = code + "\n\n" + driver.code;
+        }
+    }
+
     const submissions = problem.hiddenTestCases.map((testcase)=>({
-        source_code:code,
+        source_code: finalCode,
         language_id: languageId,
         stdin: testcase.input,
         expected_output: testcase.output
@@ -138,8 +147,17 @@ const runCode = async(req,res)=>{
 
    const languageId = getLanguageById(language);
 
+   // Stitch user code and driver code together
+   let finalCode = code;
+   if (problem.driverCode && problem.driverCode.length > 0) {
+       const driver = problem.driverCode.find(d => d.language === language || d.language.toLowerCase() === language.toLowerCase());
+       if (driver && driver.code) {
+           finalCode = code + "\n\n" + driver.code;
+       }
+   }
+
    const submissions = problem.visibleTestCases.map((testcase)=>({
-       source_code:code,
+       source_code: finalCode,
        language_id: languageId,
        stdin: testcase.input,
        expected_output: testcase.output
