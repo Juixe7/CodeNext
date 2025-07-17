@@ -23,11 +23,20 @@ const createProblem = async (req,res)=>{
         // stdin: 
         // expectedOutput:
 
+        // Stitch driver code to reference solution for testing
+        let finalCode = completeCode;
+        if (req.body.driverCode && req.body.driverCode.length > 0) {
+            const driver = req.body.driverCode.find(d => d.language === language || d.language.toLowerCase() === language.toLowerCase());
+            if (driver && driver.code) {
+                finalCode = completeCode + "\n\n" + driver.code;
+            }
+        }
+
         const languageId = getLanguageById(language);
           
         // I am creating Batch submission
         const submissions = visibleTestCases.map((testcase)=>({
-            source_code:completeCode,
+            source_code: finalCode,
             language_id: languageId,
             stdin: testcase.input,
             expected_output: testcase.output
@@ -97,11 +106,20 @@ const updateProblem = async (req,res)=>{
       // stdin: 
       // expectedOutput:
 
+      // Stitch driver code to reference solution for testing
+      let finalCode = completeCode;
+      if (req.body.driverCode && req.body.driverCode.length > 0) {
+          const driver = req.body.driverCode.find(d => d.language === language || d.language.toLowerCase() === language.toLowerCase());
+          if (driver && driver.code) {
+              finalCode = completeCode + "\n\n" + driver.code;
+          }
+      }
+
       const languageId = getLanguageById(language);
         
       // I am creating Batch submission
       const submissions = visibleTestCases.map((testcase)=>({
-          source_code:completeCode,
+          source_code: finalCode,
           language_id: languageId,
           stdin: testcase.input,
           expected_output: testcase.output
