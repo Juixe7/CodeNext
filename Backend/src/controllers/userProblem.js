@@ -57,7 +57,8 @@ const createProblem = async (req,res)=>{
 
        for(const test of testResult){
         if(test.status_id!=3){
-         return res.status(400).send("Error Occured");
+         const errorDetails = test.compile_output || test.stderr || `Failed with status ${test.status_id}`;
+         return res.status(400).json({ message: `Verification failed for ${language}: ${errorDetails}` });
         }
        }
 
