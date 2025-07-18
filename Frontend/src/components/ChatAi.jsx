@@ -37,9 +37,10 @@ function ChatAi({problem}) {
             }]);
         } catch (error) {
             console.error("API Error:", error);
+            const serverMsg = error.response?.data?.message || error.message || "Unknown error";
             setMessages(prev => [...prev, { 
                 role: 'assistant', 
-                content: "Sorry, there was an error connecting to the AI. Please make sure your API key is configured correctly."
+                content: `⚠️ ${serverMsg}`
             }]);
         }
     };
