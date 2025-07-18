@@ -5,8 +5,7 @@ import { Send } from 'lucide-react';
 
 function ChatAi({problem}) {
     const [messages, setMessages] = useState([
-        { role: 'model', parts:[{text: "Hi, How are you"}]},
-        { role: 'user', parts:[{text: "I am Good"}]}
+        { role: 'assistant', content: "Hi, I'm your AI DSA Tutor! How can I help you with this problem?"}
     ]);
 
     const { register, handleSubmit, reset,formState: {errors} } = useForm();
@@ -17,30 +16,30 @@ function ChatAi({problem}) {
     }, [messages]);
 
     const onSubmit = async (data) => {
+        const newUserMsg = { role: 'user', content: data.message };
+        const updatedMessages = [...messages, newUserMsg];
         
-        setMessages(prev => [...prev, { role: 'user', parts:[{text: data.message}] }]);
+        setMessages(updatedMessages);
         reset();
 
         try {
-            
             const response = await axiosClient.post("/ai/chat", {
-                messages:messages,
-                title:problem.title,
-                description:problem.description,
+                messages: updatedMessages,
+                title: problem.title,
+                description: problem.description,
                 testCases: problem.visibleTestCases,
-                startCode:problem.startCode
+                startCode: problem.startCode
             });
 
-           
             setMessages(prev => [...prev, { 
-                role: 'model', 
-                parts:[{text: response.data.message}] 
+                role: 'assistant', 
+                content: response.data.message 
             }]);
         } catch (error) {
             console.error("API Error:", error);
             setMessages(prev => [...prev, { 
-                role: 'model', 
-                parts:[{text: "Error from AI Chatbot"}]
+                role: 'assistant', 
+                content: "Sorry, there was an error connecting to the AI. Please make sure your API key is configured correctly."
             }]);
         }
     };
@@ -53,8 +52,8 @@ function ChatAi({problem}) {
                         key={index} 
                         className={`chat ${msg.role === "user" ? "chat-end" : "chat-start"}`}
                     >
-                        <div className="chat-bubble bg-base-200 text-base-content">
-                            {msg.parts[0].text}
+                        <div className="chat-bubble bg-base-200 text-base-content whitespace-pre-wrap">
+                            {msg.content}
                         </div>
                     </div>
                 ))}
