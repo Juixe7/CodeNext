@@ -15,32 +15,24 @@ Problem: ${title}
 Description: ${description}
 Only help with DSA topics related to this problem. Be concise and educational.`;
 
-        // Build prompt in Mistral instruct format: <s>[INST] ... [/INST]
-        let prompt = `<s>[INST] ${systemInstruction}\n\n`;
-        
-        for (let i = 0; i < messages.length; i++) {
-            const m = messages[i];
-            const isUser = m.role === 'user';
-            if (isUser) {
-                if (i === 0) {
-                    prompt += `${m.content} [/INST]`;
-                } else {
-                    prompt += ` [INST] ${m.content} [/INST]`;
-                }
-            } else {
-                prompt += ` ${m.content} </s>`;
-            }
-        }
+        // Build OpenAI-compatible messages array
+        const apiMessages = [
+            { role: "system", content: systemInstruction },
+            ...messages.map(m => ({
+                role: m.role === 'assistant' || m.role === 'model' ? 'assistant' : 'user',
+                content: m.content || ''
+            }))
+        ];
 
+        // Use HuggingFace's OpenAI-compatible chat completions endpoint
+        // with a confirmed free-tier model
         const response = await axios.post(
-            'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',
+            'https://router.huggingface.co/hf-inference/models/HuggingFaceH4/zephyr-7b-beta/v1/chat/completions',
             {
-                inputs: prompt,
-                parameters: {
-                    max_new_tokens: 800,
-                    temperature: 0.5,
-                    return_full_text: false
-                }
+                model: "HuggingFaceH4/zephyr-7b-beta",
+                messages: apiMessages,
+                max_tokens: 800,
+                temperature: 0.5
             },
             {
                 headers: {
@@ -51,15 +43,7 @@ Only help with DSA topics related to this problem. Be concise and educational.`;
             }
         );
 
-        let reply = '';
-        if (Array.isArray(response.data) && response.data[0]?.generated_text) {
-            reply = response.data[0].generated_text.trim();
-        } else if (response.data?.generated_text) {
-            reply = response.data.generated_text.trim();
-        } else {
-            reply = "I received a response but couldn't parse it. Please try again.";
-        }
-        
+        const reply = response.data.choices[0].message.content;
         res.status(200).json({ message: reply });
         
     } catch(err) {
