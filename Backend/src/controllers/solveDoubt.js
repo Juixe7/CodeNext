@@ -4,72 +4,70 @@ const solveDoubt = async (req, res) => {
     try {
         const { messages, title, description, testCases, startCode } = req.body;
 
-        const systemInstruction = `
-You are an expert Data Structures and Algorithms (DSA) tutor specializing in helping users solve coding problems. Your role is strictly limited to DSA-related assistance only.
-
-## CURRENT PROBLEM CONTEXT:
-[PROBLEM_TITLE]: ${title}
-[PROBLEM_DESCRIPTION]: ${description}
-[EXAMPLES]: ${JSON.stringify(testCases)}
-[startCode]: ${JSON.stringify(startCode)}
-
-## YOUR CAPABILITIES:
-1. **Hint Provider**: Give step-by-step hints without revealing the complete solution
-2. **Code Reviewer**: Debug and fix code submissions with explanations
-3. **Solution Guide**: Provide optimal solutions with detailed explanations
-4. **Complexity Analyzer**: Explain time and space complexity trade-offs
-5. **Approach Suggester**: Recommend different algorithmic approaches (brute force, optimized, etc.)
-
-## INTERACTION GUIDELINES:
-- Break down the problem into smaller sub-problems when giving hints.
-- Do NOT provide the complete code immediately unless explicitly asked for the "Optimal Solution".
-- Use clear, concise explanations and format code with proper Markdown syntax highlighting.
-- Always respond in the Language the user is asking about.
-- If asked about non-DSA topics, politely decline.
-`;
-
-        // Format messages for OpenAI-compatible HF API
-        const apiMessages = [
-            { role: "system", content: systemInstruction },
-            ...messages.map(m => ({
-                role: m.role === 'assistant' || m.role === 'model' ? 'assistant' : 'user',
-                content: m.content || ''
-            }))
-        ];
-
-        // We will use Qwen2.5-Coder-32B-Instruct from HuggingFace
         const hfToken = process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY;
         
         if (!hfToken) {
-            return res.status(400).json({ message: "Please add HF_TOKEN to your backend .env file." });
+            return res.status(400).json({ message: "HF_TOKEN is not configured on the server." });
+        }
+
+        const systemInstruction = `You are an expert DSA tutor helping with the following problem.
+Problem: ${title}
+Description: ${description}
+Only help with DSA topics related to this problem. Be concise and educational.`;
+
+        // Build prompt in Mistral instruct format: <s>[INST] ... [/INST]
+        let prompt = `<s>[INST] ${systemInstruction}\n\n`;
+        
+        for (let i = 0; i < messages.length; i++) {
+            const m = messages[i];
+            const isUser = m.role === 'user';
+            if (isUser) {
+                if (i === 0) {
+                    prompt += `${m.content} [/INST]`;
+                } else {
+                    prompt += ` [INST] ${m.content} [/INST]`;
+                }
+            } else {
+                prompt += ` ${m.content} </s>`;
+            }
         }
 
         const response = await axios.post(
-            'https://api-inference.huggingface.co/models/Qwen/Qwen2.5-Coder-32B-Instruct/v1/chat/completions',
+            'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',
             {
-                model: "Qwen/Qwen2.5-Coder-32B-Instruct",
-                messages: apiMessages,
-                max_tokens: 1500,
-                temperature: 0.5
+                inputs: prompt,
+                parameters: {
+                    max_new_tokens: 800,
+                    temperature: 0.5,
+                    return_full_text: false
+                }
             },
             {
                 headers: {
                     'Authorization': `Bearer ${hfToken}`,
                     'Content-Type': 'application/json'
-                }
+                },
+                timeout: 60000
             }
         );
 
-        const reply = response.data.choices[0].message.content;
+        let reply = '';
+        if (Array.isArray(response.data) && response.data[0]?.generated_text) {
+            reply = response.data[0].generated_text.trim();
+        } else if (response.data?.generated_text) {
+            reply = response.data.generated_text.trim();
+        } else {
+            reply = "I received a response but couldn't parse it. Please try again.";
+        }
         
-        res.status(200).json({
-            message: reply
-        });
+        res.status(200).json({ message: reply });
         
     } catch(err) {
-        console.error("AI API Error:", err.response?.data || err.message);
+        const errData = err.response?.data;
+        console.error("AI API Error:", JSON.stringify(errData) || err.message);
+        const errMsg = errData?.error || err.message || "Unknown error";
         res.status(500).json({
-            message: "Internal server error connecting to Hugging Face AI endpoint."
+            message: `AI Error: ${errMsg}`
         });
     }
 }
