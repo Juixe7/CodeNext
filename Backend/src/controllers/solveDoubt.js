@@ -15,7 +15,6 @@ Problem: ${title}
 Description: ${description}
 Only help with DSA topics related to this problem. Be concise and educational.`;
 
-        // Build OpenAI-compatible messages array
         const apiMessages = [
             { role: "system", content: systemInstruction },
             ...messages.map(m => ({
@@ -24,12 +23,12 @@ Only help with DSA topics related to this problem. Be concise and educational.`;
             }))
         ];
 
-        // Use HuggingFace's OpenAI-compatible chat completions endpoint
-        // with a confirmed free-tier model
+        // HuggingFace unified OpenAI-compatible endpoint
+        // Docs: https://huggingface.co/docs/api-inference/tasks/chat-completion
         const response = await axios.post(
-            'https://router.huggingface.co/hf-inference/models/HuggingFaceH4/zephyr-7b-beta/v1/chat/completions',
+            'https://api-inference.huggingface.co/v1/chat/completions',
             {
-                model: "HuggingFaceH4/zephyr-7b-beta",
+                model: "microsoft/Phi-3-mini-4k-instruct",
                 messages: apiMessages,
                 max_tokens: 800,
                 temperature: 0.5
@@ -39,7 +38,7 @@ Only help with DSA topics related to this problem. Be concise and educational.`;
                     'Authorization': `Bearer ${hfToken}`,
                     'Content-Type': 'application/json'
                 },
-                timeout: 60000
+                timeout: 120000
             }
         );
 
