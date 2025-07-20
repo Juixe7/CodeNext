@@ -3,120 +3,124 @@ import { NavLink } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import axiosClient from '../utils/axiosClient';
 import { logoutUser } from '../authSlice';
-import { Code, Trophy, Filter, Search, User, LogOut, Settings, BookOpen } from 'lucide-react';
+import { Code, Trophy, Search, User, LogOut, Settings, BookOpen, TrendingUp, CheckCircle } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import logoRoadCode from '../assets/RoadCodeLogo.jpg';
+
+// Skeleton row for problem list
+const ProblemSkeleton = () => (
+  <div className="card bg-base-100 border border-base-300 p-5 flex flex-row items-center gap-4 animate-pulse">
+    <div className="flex-1 space-y-2">
+      <div className="h-4 bg-base-300 rounded w-2/3" />
+      <div className="flex gap-2">
+        <div className="h-3 bg-base-300 rounded w-14" />
+        <div className="h-3 bg-base-300 rounded w-14" />
+      </div>
+    </div>
+    <div className="h-9 w-28 bg-base-300 rounded-lg" />
+  </div>
+);
+
+// Animated counter
+const AnimatedCount = ({ value }) => {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const end = parseInt(value) || 0;
+    if (end === 0) return;
+    const duration = 800;
+    const step = Math.ceil(end / (duration / 16));
+    const timer = setInterval(() => {
+      start = Math.min(start + step, end);
+      setDisplay(start);
+      if (start >= end) clearInterval(timer);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value]);
+  return <span>{display}</span>;
+};
 
 function Homepage() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [problems, setProblems] = useState([]);
   const [solvedProblems, setSolvedProblems] = useState([]);
-  const [filters, setFilters] = useState({
-    difficulty: 'all',
-    tag: 'all',
-    status: 'all' 
-  });
+  const [loadingProblems, setLoadingProblems] = useState(true);
+  const [filters, setFilters] = useState({ difficulty: 'all', tag: 'all', status: 'all' });
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const fetchProblems = async () => {
+    const fetchAll = async () => {
+      setLoadingProblems(true);
       try {
         const { data } = await axiosClient.get('/problem/getAllProblem');
         setProblems(data);
-      } catch (error) {
-        console.error('Error fetching problems:', error);
-      }
+      } catch (error) { console.error(error); }
+      finally { setLoadingProblems(false); }
     };
-
-    const fetchSolvedProblems = async () => {
+    const fetchSolved = async () => {
       try {
         const { data } = await axiosClient.get('/problem/problemSolvedByUser');
         setSolvedProblems(data);
-      } catch (error) {
-        console.error('Error fetching solved problems:', error);
-      }
+      } catch {}
     };
-
-    fetchProblems();
-    if (user) fetchSolvedProblems();
+    fetchAll();
+    if (user) fetchSolved();
   }, [user]);
 
-  const handleLogout = () => {
-    dispatch(logoutUser());
-    setSolvedProblems([]);
-  };
+  const handleLogout = () => { dispatch(logoutUser()); setSolvedProblems([]); };
 
-  const filteredProblems = problems.filter(problem => {
-    const difficultyMatch = filters.difficulty === 'all' || problem.difficulty === filters.difficulty;
-    const tagMatch = filters.tag === 'all' || problem.tags === filters.tag;
-    const statusMatch = filters.status === 'all' || 
-                      (filters.status === 'solved' && solvedProblems.some(sp => sp._id === problem._id)) ||
-                      (filters.status === 'unsolved' && !solvedProblems.some(sp => sp._id === problem._id));
-    const searchMatch = problem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       problem.tags.toLowerCase().includes(searchQuery.toLowerCase());
-    return difficultyMatch && tagMatch && statusMatch && searchMatch;
+  const filteredProblems = problems.filter(p => {
+    const diffOk   = filters.difficulty === 'all' || p.difficulty === filters.difficulty;
+    const tagOk    = filters.tag === 'all' || p.tags === filters.tag;
+    const solved   = solvedProblems.some(sp => sp._id === p._id);
+    const statusOk = filters.status === 'all' || (filters.status === 'solved' && solved) || (filters.status === 'unsolved' && !solved);
+    const searchOk = p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.tags.toLowerCase().includes(searchQuery.toLowerCase());
+    return diffOk && tagOk && statusOk && searchOk;
   });
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty.toLowerCase()) {
-      case 'easy': return 'badge-success';
-      case 'medium': return 'badge-warning';
-      case 'hard': return 'badge-error';
-      default: return 'badge-neutral';
-    }
-  };
+  const easyCount   = problems.filter(p => p.difficulty === 'easy').length;
+  const mediumCount = problems.filter(p => p.difficulty === 'medium').length;
+  const hardCount   = problems.filter(p => p.difficulty === 'hard').length;
+  const solvedPct   = problems.length > 0 ? Math.round((solvedProblems.length / problems.length) * 100) : 0;
 
-  const getDifficultyIcon = (difficulty) => {
-    switch (difficulty.toLowerCase()) {
-      case 'easy': return '🟢';
-      case 'medium': return '🟡';
-      case 'hard': return '🔴';
-      default: return '⚪';
-    }
-  };
+  const diffBadge = { easy: 'badge-success', medium: 'badge-warning', hard: 'badge-error' };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100 transition-colors duration-300">
-      {/* Enhanced Navigation Bar */}
-      <nav className="navbar bg-base-100 shadow-lg border-b border-base-300 px-6 transition-colors duration-300">
+
+      {/* Navbar */}
+      <nav className="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-40 border-b border-base-300 px-6 shadow-sm">
         <div className="flex-1">
-          <NavLink to="/" className="btn btn-ghost text-xl font-bold flex items-center gap-2 hover:bg-base-200 transition-colors">
-            <img 
-              src={logoRoadCode} 
-              alt="RoadCode Logo" 
-              className="w-10 h-10 rounded-full object-cover shadow-md"
-            />
-            <span className="hidden sm:inline">ROAD-CODE</span>
+          <NavLink to="/" className="btn btn-ghost text-xl font-bold flex items-center gap-2">
+            <img src={logoRoadCode} alt="Logo" className="w-9 h-9 rounded-full object-cover shadow-sm" />
+            <span className="hidden sm:inline bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">RoadCode</span>
           </NavLink>
         </div>
-        
-        <div className="flex-none gap-4">
+        <div className="flex-none gap-3">
           {user?.role === 'admin' && (
-            <NavLink to="/admin" className="btn btn-ghost btn-sm">
-              <Settings className="w-4 h-4 mr-1" />
-              Admin
+            <NavLink to="/admin" className="btn btn-ghost btn-sm gap-1">
+              <Settings className="w-4 h-4" /> Admin
             </NavLink>
           )}
-          
-          {/* Theme Toggle */}
           <ThemeToggle size="sm" />
-          
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} className="btn btn-ghost btn-circle avatar">
-              <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
-                <User className="w-5 h-5" />
+            <div tabIndex={0} className="btn btn-ghost btn-circle">
+              <div className="w-9 h-9 rounded-full bg-primary/15 border-2 border-primary/30 flex items-center justify-center text-primary font-bold text-sm">
+                {user?.firstName?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
               </div>
             </div>
-            <ul className="mt-3 p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-300">
-              <li className="menu-title">
-                <span className="text-sm font-semibold">{user?.firstName}</span>
+            <ul className="mt-3 p-2 shadow-xl menu menu-sm dropdown-content bg-base-100 rounded-2xl w-52 border border-base-300">
+              <li className="px-3 py-2">
+                <div>
+                  <p className="font-semibold text-sm">{user?.firstName}</p>
+                  <p className="text-xs text-base-content/50">{user?.emailId}</p>
+                </div>
               </li>
-              <div className="divider my-1"></div>
+              <div className="divider my-1" />
               <li>
-                <button onClick={handleLogout} className="text-error">
-                  <LogOut className="w-4 h-4" />
-                  Logout
+                <button onClick={handleLogout} className="text-error hover:bg-error/10 gap-2">
+                  <LogOut className="w-4 h-4" /> Logout
                 </button>
               </li>
             </ul>
@@ -124,174 +128,170 @@ function Homepage() {
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
-        
-        {/* Welcome Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-extrabold tracking-tight mb-2">
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+
+        {/* Welcome */}
+        <div className="mb-8 animate-fade-in-up">
+          <h1 className="text-3xl font-extrabold tracking-tight mb-1">
             Welcome back, <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">{user?.firstName || 'Coder'}</span>! 👋
           </h1>
-          <p className="text-base-content/60 text-lg">Pick up where you left off and conquer new algorithms.</p>
+          <p className="text-base-content/50">Keep the momentum going — you're on your way! 🚀</p>
         </div>
 
-        {/* Premium Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {/* Total Problems Stat */}
+        {/* Stat Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          {/* Total */}
           <div className="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
-            <div className="card-body flex-row items-center justify-between z-10 p-6">
+            <div className="absolute top-0 right-0 w-28 h-28 bg-primary/10 rounded-full blur-3xl -mr-8 -mt-8 group-hover:scale-150 transition-transform duration-500" />
+            <div className="card-body flex-row items-center justify-between p-5 z-10">
               <div>
-                <p className="text-base-content/60 font-medium mb-1">Total Problems</p>
-                <h2 className="text-4xl font-bold text-base-content">{problems.length}</h2>
+                <p className="text-xs text-base-content/50 font-medium uppercase tracking-wider mb-1">Total Problems</p>
+                <h2 className="text-4xl font-bold"><AnimatedCount value={problems.length} /></h2>
               </div>
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm">
-                <BookOpen className="w-7 h-7" />
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <BookOpen className="w-6 h-6" />
               </div>
             </div>
-          </div>
-          
-          {/* Solved Stat */}
-          <div className="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-success/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
-            <div className="card-body flex-row items-center justify-between z-10 p-6">
-              <div>
-                <p className="text-base-content/60 font-medium mb-1">Solved</p>
-                <h2 className="text-4xl font-bold text-base-content">{solvedProblems.length}</h2>
-              </div>
-              <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center text-success shadow-sm">
-                <Trophy className="w-7 h-7" />
-              </div>
+            {/* Difficulty breakdown */}
+            <div className="px-5 pb-4 flex gap-2 text-xs">
+              <span className="text-success font-medium">{easyCount}E</span>
+              <span className="text-base-content/30">·</span>
+              <span className="text-warning font-medium">{mediumCount}M</span>
+              <span className="text-base-content/30">·</span>
+              <span className="text-error font-medium">{hardCount}H</span>
             </div>
           </div>
-          
-          {/* Success Rate Stat */}
+
+          {/* Solved */}
           <div className="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-info/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
-            <div className="card-body flex-row items-center justify-between z-10 p-6">
+            <div className="absolute top-0 right-0 w-28 h-28 bg-success/10 rounded-full blur-3xl -mr-8 -mt-8 group-hover:scale-150 transition-transform duration-500" />
+            <div className="card-body flex-row items-center justify-between p-5 z-10">
               <div>
-                <p className="text-base-content/60 font-medium mb-1">Success Rate</p>
-                <h2 className="text-4xl font-bold text-base-content">
-                  {problems.length > 0 ? Math.round((solvedProblems.length / problems.length) * 100) : 0}%
-                </h2>
+                <p className="text-xs text-base-content/50 font-medium uppercase tracking-wider mb-1">Solved</p>
+                <h2 className="text-4xl font-bold"><AnimatedCount value={solvedProblems.length} /></h2>
               </div>
-              <div className="w-14 h-14 rounded-2xl bg-info/10 flex items-center justify-center text-info shadow-sm">
-                <Code className="w-7 h-7" />
+              <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center text-success">
+                <Trophy className="w-6 h-6" />
               </div>
+            </div>
+            {/* Progress bar */}
+            <div className="px-5 pb-4">
+              <div className="w-full bg-base-300 rounded-full h-1.5 overflow-hidden">
+                <div className="h-full bg-success rounded-full transition-all duration-1000" style={{ width: `${solvedPct}%` }} />
+              </div>
+              <p className="text-xs text-base-content/40 mt-1">{solvedPct}% complete</p>
+            </div>
+          </div>
+
+          {/* Success Rate */}
+          <div className="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-28 h-28 bg-info/10 rounded-full blur-3xl -mr-8 -mt-8 group-hover:scale-150 transition-transform duration-500" />
+            <div className="card-body flex-row items-center justify-between p-5 z-10">
+              <div>
+                <p className="text-xs text-base-content/50 font-medium uppercase tracking-wider mb-1">Success Rate</p>
+                <h2 className="text-4xl font-bold"><AnimatedCount value={solvedPct} />%</h2>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-info/10 flex items-center justify-center text-info">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+            </div>
+            <div className="px-5 pb-4 text-xs text-base-content/40">
+              {problems.length - solvedProblems.length} problems remaining
             </div>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-8">
-          {/* Search Bar (Fixed using join) */}
-          <div className="join w-full lg:w-1/2 shadow-sm border border-base-300 rounded-lg">
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-base-content/40" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search problems by title or tags..."
-                className="input join-item w-full pl-10 focus:outline-primary border-none"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <button className="btn btn-primary join-item px-8">
-              Search
-            </button>
+        <div className="flex flex-col lg:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+            <input
+              type="text"
+              placeholder="Search problems..."
+              className="input input-bordered w-full pl-9 focus:border-primary transition-colors"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-3 lg:w-1/2 justify-start lg:justify-end">
-            <select 
-              className="select select-bordered shadow-sm focus:outline-primary bg-base-100 min-w-[140px]"
-              value={filters.status}
-              onChange={(e) => setFilters({...filters, status: e.target.value})}
-            >
+          <div className="flex gap-2 flex-wrap">
+            <select className="select select-bordered select-sm" value={filters.status} onChange={(e) => setFilters({...filters, status: e.target.value})}>
               <option value="all">All Status</option>
               <option value="solved">✅ Solved</option>
               <option value="unsolved">⭕ Unsolved</option>
             </select>
-
-            <select 
-              className="select select-bordered shadow-sm focus:outline-primary bg-base-100 min-w-[140px]"
-              value={filters.difficulty}
-              onChange={(e) => setFilters({...filters, difficulty: e.target.value})}
-            >
-              <option value="all">All Difficulties</option>
+            <select className="select select-bordered select-sm" value={filters.difficulty} onChange={(e) => setFilters({...filters, difficulty: e.target.value})}>
+              <option value="all">All Difficulty</option>
               <option value="easy">🟢 Easy</option>
               <option value="medium">🟡 Medium</option>
               <option value="hard">🔴 Hard</option>
             </select>
-
-            <select 
-              className="select select-bordered shadow-sm focus:outline-primary bg-base-100 min-w-[140px]"
-              value={filters.tag}
-              onChange={(e) => setFilters({...filters, tag: e.target.value})}
-            >
+            <select className="select select-bordered select-sm" value={filters.tag} onChange={(e) => setFilters({...filters, tag: e.target.value})}>
               <option value="all">All Tags</option>
               <option value="array">Array</option>
               <option value="linkedList">Linked List</option>
               <option value="graph">Graph</option>
               <option value="dp">DP</option>
+              <option value="string">String</option>
+              <option value="tree">Tree</option>
             </select>
           </div>
         </div>
 
-        {/* Problems List */}
-        <div className="grid gap-4">
-          {filteredProblems.length === 0 ? (
-            <div className="text-center py-20 bg-base-200/30 rounded-3xl border border-base-300 border-dashed">
-              <div className="w-20 h-20 bg-base-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-base-300">
-                <Search className="w-10 h-10 text-base-content/30" />
-              </div>
-              <h3 className="text-2xl font-bold mb-2">No problems found</h3>
-              <p className="text-base-content/60 max-w-sm mx-auto">We couldn't find any problems matching your current search or filters.</p>
+        {/* Results count */}
+        {!loadingProblems && (
+          <p className="text-xs text-base-content/40 mb-3">
+            Showing {filteredProblems.length} of {problems.length} problems
+          </p>
+        )}
+
+        {/* Problem List */}
+        <div className="space-y-3">
+          {loadingProblems ? (
+            Array.from({ length: 6 }).map((_, i) => <ProblemSkeleton key={i} />)
+          ) : filteredProblems.length === 0 ? (
+            <div className="text-center py-20 bg-base-200/30 rounded-3xl border border-dashed border-base-300">
+              <Search className="w-10 h-10 mx-auto text-base-content/20 mb-3" />
+              <h3 className="font-bold mb-1">No problems found</h3>
+              <p className="text-base-content/50 text-sm">Try adjusting your search or filters</p>
             </div>
           ) : (
-            filteredProblems.map(problem => (
-              <div key={problem._id} className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-300 border border-base-300 group hover:border-primary/40">
-                <div className="card-body p-5 sm:p-6 flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h2 className="card-title text-xl font-bold group-hover:text-primary transition-colors">
-                        <NavLink to={`/problem/${problem._id}`}>
-                          {problem.title}
-                        </NavLink>
+            filteredProblems.map((problem, i) => {
+              const solved = solvedProblems.some(sp => sp._id === problem._id);
+              return (
+                <NavLink
+                  key={problem._id}
+                  to={`/problem/${problem._id}`}
+                  className="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-200 group block"
+                >
+                  <div className="card-body p-4 flex-row items-center gap-4">
+                    {/* Number / solved indicator */}
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold
+                      ${solved ? 'bg-success/15 text-success' : 'bg-base-200 text-base-content/40'}`}>
+                      {solved ? <CheckCircle className="w-4 h-4" /> : i + 1}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h2 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
+                        {problem.title}
                       </h2>
-                      {solvedProblems.some(sp => sp._id === problem._id) && (
-                        <div className="badge badge-success badge-sm gap-1 font-semibold text-xs py-2 px-3 shadow-sm shadow-success/20">
-                          <Trophy className="w-3 h-3" /> Solved
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-2 mt-3">
-                      <div className={`badge ${getDifficultyColor(problem.difficulty)} badge-sm font-semibold py-2 px-3 uppercase tracking-wider text-[10px]`}>
-                        {problem.difficulty}
-                      </div>
-                      <div className="badge badge-outline border-base-300 text-base-content/70 badge-sm py-2 px-3 uppercase tracking-wider text-[10px]">
-                        {problem.tags}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`badge badge-xs ${diffBadge[problem.difficulty] || 'badge-neutral'}`}>
+                          {problem.difficulty}
+                        </span>
+                        <span className="badge badge-xs badge-outline">{problem.tags}</span>
                       </div>
                     </div>
+
+                    <div className="shrink-0">
+                      <span className="btn btn-primary btn-xs gap-1 group-hover:shadow-sm shadow-primary/20 transition-shadow">
+                        <Code className="w-3 h-3" />
+                        {solved ? 'Revisit' : 'Solve'}
+                      </span>
+                    </div>
                   </div>
-                  
-                  <div className="w-full sm:w-auto">
-                    <NavLink 
-                      to={`/problem/${problem._id}`}
-                      className="btn btn-primary w-full sm:w-auto shadow-sm shadow-primary/20 group-hover:shadow-primary/40 group-hover:-translate-y-0.5 transition-all"
-                    >
-                      <Code className="w-4 h-4 mr-1" />
-                      Solve Problem
-                    </NavLink>
-                  </div>
-                  
-                </div>
-              </div>
-            ))
+                </NavLink>
+              );
+            })
           )}
         </div>
       </div>

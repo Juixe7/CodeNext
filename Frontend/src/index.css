@@ -67,7 +67,27 @@ html {
   outline-offset: 2px;
 }
 
+/* Fade-in animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.35s ease-out both;
+}
+
 /* Loading animations */
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;

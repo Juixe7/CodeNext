@@ -104,9 +104,16 @@ function LandingPage() {
             
             <div className="grid md:grid-cols-2 gap-8">
               {features.map((feature, idx) => (
-                <div key={idx} className="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow">
+                <div key={idx}
+                  className="card bg-base-100 border border-base-300 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  style={{ animationDelay: `${idx * 100}ms` }}
+                >
                   <div className="card-body">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
+                      idx === 0 ? 'bg-primary/10 text-primary' :
+                      idx === 1 ? 'bg-secondary/10 text-secondary' :
+                      idx === 2 ? 'bg-accent/10 text-accent' : 'bg-success/10 text-success'
+                    }`}>
                       {feature.icon}
                     </div>
                     <h3 className="card-title text-xl mb-2">{feature.title}</h3>
@@ -141,15 +148,18 @@ function LandingPage() {
               
               <div className="lg:w-2/3 grid sm:grid-cols-2 gap-4 w-full">
                 {topics.map((topic, idx) => (
-                  <div key={idx} className={`p-6 rounded-2xl border ${topic.color} bg-opacity-5 hover:bg-opacity-10 transition-colors cursor-pointer flex justify-between items-center group`}>
+                  <NavLink to="/signup" key={idx}
+                    className={`p-5 rounded-2xl border ${topic.color} hover:scale-[1.02] transition-all duration-200 cursor-pointer flex justify-between items-center group`}
+                    style={{ animationDelay: `${idx * 80}ms` }}
+                  >
                     <div>
-                      <h4 className="font-bold text-lg text-base-content mb-1">{topic.name}</h4>
-                      <span className="text-sm opacity-80">{topic.count}</span>
+                      <h4 className="font-bold text-base text-base-content mb-0.5">{topic.name}</h4>
+                      <span className="text-xs opacity-70">{topic.count}</span>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-base-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                      <ArrowRight className="w-4 h-4 text-base-content" />
+                    <div className="w-7 h-7 rounded-full bg-base-100/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </div>
-                  </div>
+                  </NavLink>
                 ))}
               </div>
             </div>

@@ -15,6 +15,7 @@ import AdminDelete from "./components/AdminDelete"
 import AdminUpload from "./components/AdminUpload"
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { pingServer } from "./utils/axiosClient";
+import NotFound from "./pages/NotFound";
 
 function App(){
   const [serverPinged, setServerPinged] = useState(false);
@@ -60,7 +61,8 @@ function App(){
           <Route path="/admin/delete" element={isAuthenticated && user?.role === 'admin' ? <AdminDelete /> : <Navigate to="/" />} />
           <Route path="/admin/video" element={isAuthenticated && user?.role === 'admin' ? <AdminVideo /> : <Navigate to="/" />} />
           <Route path="/admin/upload/:problemId" element={isAuthenticated && user?.role === 'admin' ? <AdminUpload /> : <Navigate to="/" />} />
-          <Route path="/problem/:problemId" element={<ProblemPage/>}></Route>
+          <Route path="/problem/:problemId" element={<ProblemPage/>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </ThemeProvider>
