@@ -140,7 +140,8 @@ const updateProblem = async (req,res)=>{
 
      for(const test of testResult){
       if(test.status_id!=3){
-       return res.status(400).send("Error Occured");
+       const errorDetails = test.compile_output || test.stderr || `Failed with status ${test.status_id}`;
+       return res.status(400).json({ message: `Verification failed for ${language}: ${errorDetails}` });
       }
      }
 
@@ -263,9 +264,9 @@ const submittedProblem = async(req,res)=>{
    const ans = await Submission.find({userId,problemId});
   
   if(ans.length==0)
-    res.status(200).send("No Submission is persent");
+    return res.status(200).send("No Submission is present");
 
-  res.status(200).send(ans);
+  return res.status(200).send(ans);
 
   }
   catch(err){

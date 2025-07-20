@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Home, RefreshCw, Zap, Settings, Shield, Database } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, RefreshCw, Zap, Settings, Shield, Database, Video } from 'lucide-react';
 import { NavLink } from 'react-router';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -15,12 +15,12 @@ function Admin() {
       color: 'btn-success',
       bgColor: 'bg-success/10',
       route: '/admin/create',
-      features: ['Problem details', 'Test cases', 'Solutions', 'Video editorial']
+      features: ['Problem details', 'Test cases', 'Solutions', 'Driver code']
     },
     {
       id: 'update',
       title: 'Update Problem',
-      description: 'Edit existing problems and their details to keep content current',
+      description: 'Edit existing problems, fix test cases, update code templates and solutions',
       icon: Edit,
       color: 'btn-warning',
       bgColor: 'bg-warning/10',
@@ -36,6 +36,16 @@ function Admin() {
       bgColor: 'bg-error/10',
       route: '/admin/delete',
       features: ['Safe deletion', 'Confirmation prompts', 'Bulk operations', 'Archive options']
+    },
+    {
+      id: 'video',
+      title: 'Upload Video',
+      description: 'Upload editorial solution videos for any problem using Cloudinary',
+      icon: Video,
+      color: 'btn-info',
+      bgColor: 'bg-info/10',
+      route: '/admin/video',
+      features: ['Direct Cloudinary upload', 'Progress tracking', 'Video preview', 'Delete videos']
     }
   ];
 
@@ -106,7 +116,7 @@ function Admin() {
         </div>
 
         {/* Admin Options Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {adminOptions.map((option) => {
             const IconComponent = option.icon;
             return (

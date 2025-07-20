@@ -1,19 +1,86 @@
 import { useState, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
 import Editor from '@monaco-editor/react';
 import { useParams, NavLink } from 'react-router';
-import axiosClient from "../utils/axiosClient"
-import SubmissionHistory from "../components/SubmissionHistory"
+import axiosClient from "../utils/axiosClient";
+import SubmissionHistory from "../components/SubmissionHistory";
 import ChatAi from '../components/ChatAi';
 import Editorial from '../components/Editorial';
-import { Code, Play, Send, ArrowLeft, FileText, Video, MessageSquare, History, CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
+import { Code, Play, Send, ArrowLeft, FileText, Video, MessageSquare, History, CheckCircle, XCircle, Clock, Zap, Copy, Check, Sparkles, ChevronUp, Terminal } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 
-const langMap = {
-  cpp: 'C++',
-  java: 'Java',
-  javascript: 'JavaScript'
+const langMap = { cpp: 'C++', java: 'Java', javascript: 'JavaScript' };
+
+const difficultyConfig = {
+  easy:   { badge: 'badge-success',  text: 'text-success',  bg: 'bg-success/10'  },
+  medium: { badge: 'badge-warning',  text: 'text-warning',  bg: 'bg-warning/10'  },
+  hard:   { badge: 'badge-error',    text: 'text-error',    bg: 'bg-error/10'    },
 };
+
+// Skeleton loader for the left panel
+const SkeletonLoader = () => (
+  <div className="h-screen flex bg-base-100">
+    <div className="w-1/2 flex flex-col border-r border-base-300 p-6 gap-4">
+      <div className="h-8 bg-base-300 rounded-lg animate-pulse w-3/4" />
+      <div className="h-4 bg-base-300 rounded animate-pulse w-1/4" />
+      <div className="h-32 bg-base-300 rounded-lg animate-pulse" />
+      <div className="h-24 bg-base-300 rounded-lg animate-pulse" />
+      <div className="h-24 bg-base-300 rounded-lg animate-pulse w-5/6" />
+    </div>
+    <div className="w-1/2 bg-base-200 flex items-center justify-center">
+      <div className="text-center">
+        <span className="loading loading-dots loading-lg text-primary" />
+        <p className="mt-3 text-base-content/50 text-sm">Loading editor...</p>
+      </div>
+    </div>
+  </div>
+);
+
+// Copy button with feedback
+const CopyButton = ({ text }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button onClick={handleCopy} className="btn btn-xs btn-ghost gap-1" title="Copy code">
+      {copied ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
+      {copied ? 'Copied!' : 'Copy'}
+    </button>
+  );
+};
+
+// Test case card
+const TestCaseCard = ({ tc, index, passed }) => (
+  <div className={`rounded-xl border ${passed ? 'border-success/30 bg-success/5' : 'border-error/40 bg-error/5'} overflow-hidden`}>
+    <div className={`flex items-center justify-between px-3 py-2 text-xs font-semibold ${passed ? 'text-success bg-success/10' : 'text-error bg-error/10'}`}>
+      <span>Test Case {index + 1}</span>
+      <span className="flex items-center gap-1">
+        {passed ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+        {passed ? 'Passed' : 'Failed'}
+      </span>
+    </div>
+    <div className="p-3 font-mono text-xs space-y-2">
+      {tc.stdin && (
+        <div>
+          <span className="text-base-content/50 block mb-1">Input</span>
+          <div className="bg-base-200 rounded px-2 py-1.5">{tc.stdin}</div>
+        </div>
+      )}
+      <div>
+        <span className="text-base-content/50 block mb-1">Expected</span>
+        <div className="bg-base-200 rounded px-2 py-1.5">{tc.expected_output}</div>
+      </div>
+      <div>
+        <span className="text-base-content/50 block mb-1">Your Output</span>
+        <div className={`rounded px-2 py-1.5 ${passed ? 'bg-success/10' : 'bg-error/10'}`}>
+          {tc.stdout || tc.compile_output || <span className="text-base-content/40 italic">No output</span>}
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const ProblemPage = () => {
   const [problem, setProblem] = useState(null);
@@ -25,10 +92,9 @@ const ProblemPage = () => {
   const [activeLeftTab, setActiveLeftTab] = useState('description');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [consoleTab, setConsoleTab] = useState('testcase');
+  const [showAccepted, setShowAccepted] = useState(false);
   const editorRef = useRef(null);
-  let { problemId } = useParams();
-
-  const { handleSubmit } = useForm();
+  const { problemId } = useParams();
 
   useEffect(() => {
     const fetchProblem = async () => {
@@ -41,15 +107,14 @@ const ProblemPage = () => {
         );
         setProblem(response.data);
         setCode(startCodeObj ? startCodeObj.initialCode : '');
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching problem:', error);
+      } finally {
         setLoading(false);
       }
     };
-
     fetchProblem();
-  }, [problemId, selectedLanguage]);
+  }, [problemId]);
 
   useEffect(() => {
     if (problem) {
@@ -61,330 +126,276 @@ const ProblemPage = () => {
     }
   }, [selectedLanguage, problem]);
 
-  const handleEditorChange = (value) => {
-    setCode(value || '');
-  };
-
-  const handleEditorDidMount = (editor) => {
-    editorRef.current = editor;
-  };
-
-  const handleLanguageChange = (language) => {
-    setSelectedLanguage(language);
-  };
-
   const handleRun = async () => {
     setLoading(true);
     setRunResult(null);
-    
     try {
-      const response = await axiosClient.post(`/submission/run/${problemId}`, {
-        code,
-        language: selectedLanguage
-      });
-
+      const response = await axiosClient.post(`/submission/run/${problemId}`, { code, language: selectedLanguage });
       setRunResult(response.data);
-      setLoading(false);
       setConsoleTab('testcase');
       setIsConsoleOpen(true);
-      
     } catch (error) {
-      console.error('Error running code:', error);
-      setRunResult({
-        success: false,
-        error: 'Internal server error'
-      });
-      setLoading(false);
+      setRunResult({ success: false, testCases: [], error: 'Server error' });
       setConsoleTab('testcase');
       setIsConsoleOpen(true);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmitCode = async () => {
     setLoading(true);
     setSubmitResult(null);
-    
+    setShowAccepted(false);
     try {
-        const response = await axiosClient.post(`/submission/submit/${problemId}`, {
-        code:code,
-        language: selectedLanguage
-      });
-
-       setSubmitResult(response.data);
-       setLoading(false);
-       setConsoleTab('result');
-       setIsConsoleOpen(true);
-      
-    } catch (error) {
-      console.error('Error submitting code:', error);
-      setSubmitResult(null);
-      setLoading(false);
+      const response = await axiosClient.post(`/submission/submit/${problemId}`, { code, language: selectedLanguage });
+      setSubmitResult(response.data);
       setConsoleTab('result');
       setIsConsoleOpen(true);
+      if (response.data.accepted) {
+        setShowAccepted(true);
+        setTimeout(() => setShowAccepted(false), 4000);
+      }
+    } catch (error) {
+      setSubmitResult(null);
+      setConsoleTab('result');
+      setIsConsoleOpen(true);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getLanguageForMonaco = (lang) => {
-    switch (lang) {
-      case 'javascript': return 'javascript';
-      case 'java': return 'java';
-      case 'cpp': return 'cpp';
-      default: return 'javascript';
-    }
-  };
+  const getMonacoLang = (lang) => lang === 'cpp' ? 'cpp' : lang;
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'easy': return 'text-success';
-      case 'medium': return 'text-warning';
-      case 'hard': return 'text-error';
-      default: return 'text-base-content';
-    }
-  };
+  if (loading && !problem) return <SkeletonLoader />;
 
-  const getDifficultyBadge = (difficulty) => {
-    switch (difficulty) {
-      case 'easy': return 'badge-success';
-      case 'medium': return 'badge-warning';
-      case 'hard': return 'badge-error';
-      default: return 'badge-neutral';
-    }
-  };
+  const diff = difficultyConfig[problem?.difficulty] || difficultyConfig.easy;
 
-  if (loading && !problem) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100 flex justify-center items-center transition-colors duration-300">
-        <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="mt-4 text-base-content/70">Loading problem...</p>
-        </div>
-      </div>
-    );
-  }
+  const leftTabs = [
+    { id: 'description', label: 'Description', icon: FileText },
+    { id: 'editorial',   label: 'Editorial',   icon: Video },
+    { id: 'solutions',   label: 'Solutions',   icon: Code },
+    { id: 'submissions', label: 'My Submissions', icon: History },
+    { id: 'chatAI',      label: 'AI Tutor',    icon: Sparkles },
+  ];
 
   return (
-    <div className="h-screen flex bg-base-100 transition-colors duration-300">
-      {/* Left Panel */}
-      <div className="w-1/2 flex flex-col border-r border-base-300">
-        {/* Header with Back Button */}
-        <div className="bg-base-200 px-4 py-3 border-b border-base-300 transition-colors duration-300">
-          <div className="flex items-center gap-3">
-            <NavLink to="/" className="btn btn-ghost btn-sm">
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </NavLink>
-            <div className="flex-1">
-              {problem && (
-                <div className="flex items-center gap-3">
-                  <h1 className="text-lg font-semibold truncate">{problem.title}</h1>
-                  <div className={`badge ${getDifficultyBadge(problem.difficulty)}`}>
-                    {problem.difficulty}
-                  </div>
-                  <div className="badge badge-outline badge-info">
-                    {problem.tags}
-                  </div>
-                </div>
-              )}
-            </div>
-            {/* Theme Toggle */}
-            <ThemeToggle size="sm" />
+    <div className="h-screen flex flex-col bg-base-100 overflow-hidden">
+
+      {/* ── Accepted Flash Banner ── */}
+      {showAccepted && (
+        <div className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center animate-fade-in-up">
+          <div className="bg-success text-success-content px-8 py-4 rounded-2xl shadow-2xl text-2xl font-bold flex items-center gap-3 animate-bounce-in">
+            <CheckCircle className="w-8 h-8" /> 🎉 Accepted!
           </div>
         </div>
+      )}
 
-        {/* Left Tabs */}
-        <div className="tabs tabs-bordered bg-base-200 px-4 transition-colors duration-300">
-          <button 
-            className={`tab ${activeLeftTab === 'description' ? 'tab-active' : ''}`}
-            onClick={() => setActiveLeftTab('description')}
-          >
-            <FileText className="w-4 h-4 mr-1" />
-            Description
-          </button>
-          <button 
-            className={`tab ${activeLeftTab === 'editorial' ? 'tab-active' : ''}`}
-            onClick={() => setActiveLeftTab('editorial')}
-          >
-            <Video className="w-4 h-4 mr-1" />
-            Editorial
-          </button>
-          <button 
-            className={`tab ${activeLeftTab === 'solutions' ? 'tab-active' : ''}`}
-            onClick={() => setActiveLeftTab('solutions')}
-          >
-            <Code className="w-4 h-4 mr-1" />
-            Solutions
-          </button>
-          <button 
-            className={`tab ${activeLeftTab === 'submissions' ? 'tab-active' : ''}`}
-            onClick={() => setActiveLeftTab('submissions')}
-          >
-            <History className="w-4 h-4 mr-1" />
-            Submissions
-          </button>
-          <button 
-            className={`tab ${activeLeftTab === 'chatAI' ? 'tab-active' : ''}`}
-            onClick={() => setActiveLeftTab('chatAI')}
-          >
-            <MessageSquare className="w-4 h-4 mr-1" />
-            ChatAI
-          </button>
+      {/* ── Top Navbar ── */}
+      <div className="flex items-center justify-between px-4 py-2 bg-base-200 border-b border-base-300 shrink-0">
+        <NavLink to="/" className="btn btn-ghost btn-sm gap-1.5">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </NavLink>
+
+        {problem && (
+          <div className="flex items-center gap-2 flex-1 mx-4 min-w-0">
+            <h1 className="text-sm font-semibold truncate">{problem.title}</h1>
+            <span className={`badge badge-sm shrink-0 ${diff.badge}`}>{problem.difficulty}</span>
+            <span className="badge badge-sm badge-outline shrink-0">{problem.tags}</span>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 shrink-0">
+          {loading && <span className="loading loading-spinner loading-xs text-primary" />}
+          <ThemeToggle size="sm" />
         </div>
+      </div>
 
-        {/* Left Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {problem && (
-            <>
-              {activeLeftTab === 'description' && (
-                <div className="space-y-6">
-                  <div className="prose max-w-none">
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {problem.description}
+      {/* ── Main Split Layout ── */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* ═══ LEFT PANEL ═══ */}
+        <div className="w-[48%] flex flex-col border-r border-base-300 min-w-0">
+
+          {/* Left Tabs */}
+          <div className="flex items-center bg-base-200 border-b border-base-300 overflow-x-auto shrink-0">
+            {leftTabs.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveLeftTab(id)}
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-all duration-150
+                  ${activeLeftTab === id
+                    ? 'border-primary text-primary bg-base-100'
+                    : 'border-transparent text-base-content/60 hover:text-base-content hover:bg-base-300'}`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+                {id === 'chatAI' && <span className="badge badge-xs badge-primary">AI</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* Left Content */}
+          <div className="flex-1 overflow-y-auto">
+            {problem && (
+              <>
+                {/* ── Description ── */}
+                {activeLeftTab === 'description' && (
+                  <div className="p-5 space-y-5 animate-fade-in-up">
+                    {/* Problem statement */}
+                    <div className="prose prose-sm max-w-none">
+                      <div className="whitespace-pre-wrap text-sm leading-7 text-base-content/90">
+                        {problem.description}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      <FileText className="w-5 h-5" />
-                      Examples
-                    </h3>
-                    <div className="space-y-4">
-                      {problem.visibleTestCases.map((example, index) => (
-                        <div key={index} className="card bg-base-200 border border-base-300">
-                          <div className="card-body p-4">
-                            <h4 className="font-semibold mb-3">Example {index + 1}:</h4>
-                            <div className="space-y-2 text-sm font-mono">
-                              <div className="flex gap-2">
-                                <span className="font-semibold text-primary">Input:</span>
-                                <span className="bg-base-100 px-2 py-1 rounded">{example.input}</span>
+                    {/* Examples */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-3">Examples</h3>
+                      <div className="space-y-3">
+                        {problem.visibleTestCases.map((example, index) => (
+                          <div key={index} className="rounded-xl border border-base-300 overflow-hidden bg-base-200/40">
+                            <div className="px-4 py-2 bg-base-300/60 text-xs font-semibold text-base-content/70">
+                              Example {index + 1}
+                            </div>
+                            <div className="px-4 py-3 space-y-2 font-mono text-xs">
+                              <div className="flex gap-3 items-start">
+                                <span className="text-primary font-bold w-20 shrink-0">Input:</span>
+                                <code className="bg-base-100 px-2 py-1 rounded flex-1">{example.input}</code>
                               </div>
-                              <div className="flex gap-2">
-                                <span className="font-semibold text-success">Output:</span>
-                                <span className="bg-base-100 px-2 py-1 rounded">{example.output}</span>
+                              <div className="flex gap-3 items-start">
+                                <span className="text-success font-bold w-20 shrink-0">Output:</span>
+                                <code className="bg-base-100 px-2 py-1 rounded flex-1">{example.output}</code>
                               </div>
-                              <div className="flex gap-2">
-                                <span className="font-semibold text-info">Explanation:</span>
-                                <span className="bg-base-100 px-2 py-1 rounded flex-1">{example.explanation}</span>
-                              </div>
+                              {example.explanation && (
+                                <div className="flex gap-3 items-start">
+                                  <span className="text-info font-bold w-20 shrink-0">Explain:</span>
+                                  <span className="bg-base-100 px-2 py-1 rounded flex-1 font-sans">{example.explanation}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Constraints */}
+                    <div className="rounded-xl bg-base-200/60 border border-base-300 p-4">
+                      <h3 className="text-xs font-semibold text-base-content/60 uppercase tracking-wider mb-2">Constraints</h3>
+                      <div className="text-sm text-base-content/70 font-mono">
+                        • 1 ≤ n ≤ 10<sup>4</sup>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {activeLeftTab === 'editorial' && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <Video className="w-6 h-6" />
-                    Editorial
-                  </h2>
-                  <div className="prose max-w-none">
-                    <Editorial secureUrl={problem.secureUrl} thumbnailUrl={problem.thumbnailUrl} duration={problem.duration}/>
+                {/* ── Editorial ── */}
+                {activeLeftTab === 'editorial' && (
+                  <div className="p-5 animate-fade-in-up">
+                    <h2 className="text-base font-bold mb-4 flex items-center gap-2">
+                      <Video className="w-5 h-5 text-primary" /> Editorial
+                    </h2>
+                    <Editorial secureUrl={problem.secureUrl} thumbnailUrl={problem.thumbnailUrl} duration={problem.duration} />
                   </div>
-                </div>
-              )}
+                )}
 
-              {activeLeftTab === 'solutions' && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <Code className="w-6 h-6" />
-                    Solutions
-                  </h2>
-                  <div className="space-y-6">
-                    {problem.referenceSolution?.map((solution, index) => (
-                      <div key={index} className="card bg-base-200 border border-base-300">
-                        <div className="card-header bg-base-300 px-4 py-3 rounded-t-lg">
-                          <h3 className="font-semibold">{problem?.title} - {solution?.language}</h3>
+                {/* ── Solutions ── */}
+                {activeLeftTab === 'solutions' && (
+                  <div className="p-5 space-y-4 animate-fade-in-up">
+                    <h2 className="text-base font-bold flex items-center gap-2">
+                      <Code className="w-5 h-5 text-primary" /> Reference Solutions
+                    </h2>
+                    {problem.referenceSolution?.length > 0 ? problem.referenceSolution.map((solution, index) => (
+                      <div key={index} className="rounded-xl border border-base-300 overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-2 bg-base-300/60">
+                          <span className="text-xs font-semibold text-base-content/70">{solution.language}</span>
+                          <CopyButton text={solution.completeCode} />
                         </div>
-                        <div className="card-body p-4">
-                          <pre className="bg-base-100 p-4 rounded-lg text-sm overflow-x-auto border">
-                            <code>{solution?.completeCode}</code>
-                          </pre>
-                        </div>
+                        <pre className="p-4 text-xs overflow-x-auto bg-base-200/40 max-h-72">
+                          <code>{solution.completeCode}</code>
+                        </pre>
                       </div>
-                    )) || (
-                      <div className="text-center py-8">
-                        <Code className="w-12 h-12 mx-auto text-base-content/30 mb-4" />
-                        <p className="text-base-content/70">Solutions will be available after you solve the problem.</p>
+                    )) : (
+                      <div className="text-center py-12">
+                        <Code className="w-10 h-10 mx-auto text-base-content/20 mb-3" />
+                        <p className="text-base-content/50 text-sm">Solve the problem to unlock solutions.</p>
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
 
-              {activeLeftTab === 'submissions' && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <History className="w-6 h-6" />
-                    My Submissions
-                  </h2>
-                  <SubmissionHistory problemId={problemId} />
-                </div>
-              )}
+                {/* ── Submissions ── */}
+                {activeLeftTab === 'submissions' && (
+                  <div className="p-5 animate-fade-in-up">
+                    <h2 className="text-base font-bold flex items-center gap-2 mb-4">
+                      <History className="w-5 h-5 text-primary" /> My Submissions
+                    </h2>
+                    <SubmissionHistory problemId={problemId} />
+                  </div>
+                )}
 
-              {activeLeftTab === 'chatAI' && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <MessageSquare className="w-6 h-6" />
-                    Chat with AI
-                  </h2>
-                  <ChatAi problem={problem} />
-                </div>
-              )}
-            </>
-          )}
+                {/* ── AI Tutor ── */}
+                {activeLeftTab === 'chatAI' && (
+                  <div className="h-full animate-fade-in-up">
+                    <ChatAi problem={problem} />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Right Panel (Code + Console Drawer) */}
-      <div className="w-1/2 flex flex-col relative overflow-hidden">
-        
-        {/* Main Code Editor Area */}
-        <div className="flex-1 flex flex-col h-full">
-          {/* Language Selector */}
-          <div className="flex justify-between items-center p-3 border-b border-base-300 bg-base-200 transition-colors duration-300">
-            <div className="flex gap-2">
+        {/* ═══ RIGHT PANEL ═══ */}
+        <div className="flex-1 flex flex-col relative overflow-hidden min-w-0">
+
+          {/* Language selector + Run/Submit */}
+          <div className="flex items-center justify-between px-3 py-2 bg-base-200 border-b border-base-300 shrink-0">
+            <div className="flex gap-1">
               {['javascript', 'java', 'cpp'].map((lang) => (
                 <button
                   key={lang}
-                  className={`btn btn-xs sm:btn-sm ${selectedLanguage === lang ? 'btn-primary' : 'btn-ghost'}`}
-                  onClick={() => handleLanguageChange(lang)}
+                  onClick={() => setSelectedLanguage(lang)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-150
+                    ${selectedLanguage === lang
+                      ? 'bg-primary text-primary-content shadow-sm'
+                      : 'text-base-content/60 hover:bg-base-300 hover:text-base-content'}`}
                 >
-                  {lang === 'cpp' ? 'C++' : lang === 'javascript' ? 'JavaScript' : 'Java'}
+                  {lang === 'cpp' ? 'C++' : lang === 'javascript' ? 'JS' : 'Java'}
                 </button>
               ))}
             </div>
-            
             <div className="flex gap-2">
               <button
-                className={`btn btn-outline btn-sm ${loading && consoleTab === 'testcase' ? 'loading' : ''}`}
+                className="btn btn-outline btn-sm gap-1.5"
                 onClick={handleRun}
                 disabled={loading}
               >
-                <Play className="w-4 h-4" />
+                {loading && consoleTab === 'testcase'
+                  ? <span className="loading loading-spinner loading-xs" />
+                  : <Play className="w-3.5 h-3.5" />}
                 Run
               </button>
               <button
-                className={`btn btn-primary btn-sm shadow-sm shadow-primary/20 ${loading && consoleTab === 'result' ? 'loading' : ''}`}
+                className="btn btn-primary btn-sm gap-1.5 shadow-sm shadow-primary/25"
                 onClick={handleSubmitCode}
                 disabled={loading}
               >
-                <Send className="w-4 h-4" />
+                {loading && consoleTab === 'result'
+                  ? <span className="loading loading-spinner loading-xs" />
+                  : <Send className="w-3.5 h-3.5" />}
                 Submit
               </button>
             </div>
           </div>
 
           {/* Monaco Editor */}
-          <div className="flex-1 min-h-0 relative">
+          <div className="flex-1 min-h-0">
             <Editor
               height="100%"
-              language={getLanguageForMonaco(selectedLanguage)}
+              language={getMonacoLang(selectedLanguage)}
               value={code}
-              onChange={handleEditorChange}
-              onMount={handleEditorDidMount}
+              onChange={(v) => setCode(v || '')}
+              onMount={(editor) => { editorRef.current = editor; }}
               theme="vs-dark"
               options={{
                 fontSize: 14,
@@ -392,200 +403,148 @@ const ProblemPage = () => {
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
                 tabSize: 2,
-                insertSpaces: true,
                 wordWrap: 'on',
                 lineNumbers: 'on',
-                padding: { top: 16 },
+                padding: { top: 12 },
                 cursorStyle: 'line',
                 mouseWheelZoom: true,
+                smoothScrolling: true,
+                cursorBlinking: 'smooth',
               }}
             />
           </div>
 
-          {/* Console Toggle Bar (Bottom) */}
-          <div className="bg-base-200 border-t border-base-300 p-2 flex justify-between items-center z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-            <button 
-              className="btn btn-ghost btn-sm gap-2"
+          {/* Console Toggle Bar */}
+          <div className="bg-base-200 border-t border-base-300 px-3 py-1.5 flex items-center justify-between shrink-0 z-20">
+            <button
+              className="flex items-center gap-1.5 text-xs text-base-content/60 hover:text-base-content transition-colors"
               onClick={() => setIsConsoleOpen(!isConsoleOpen)}
             >
-              <Play className="w-4 h-4" />
+              <Terminal className="w-3.5 h-3.5" />
               Console
-              <span className={`transition-transform duration-200 ${isConsoleOpen ? 'rotate-180' : ''}`}>
-                ▲
+              <ChevronUp className={`w-3.5 h-3.5 transition-transform duration-200 ${isConsoleOpen ? '' : 'rotate-180'}`} />
+            </button>
+
+            {/* Quick status pill */}
+            {runResult && (
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${runResult.success ? 'bg-success/15 text-success' : 'bg-error/15 text-error'}`}>
+                {runResult.success ? '✓ Tests Passed' : '✗ Tests Failed'}
               </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Slide-up Console Drawer */}
-        <div 
-          className={`absolute bottom-12 left-0 right-0 bg-base-100 border-t border-base-300 transition-all duration-300 ease-in-out z-10 flex flex-col shadow-2xl`}
-          style={{ 
-            height: isConsoleOpen ? '45%' : '0px',
-            opacity: isConsoleOpen ? 1 : 0,
-            visibility: isConsoleOpen ? 'visible' : 'hidden'
-          }}
-        >
-          {/* Drawer Tabs */}
-          <div className="tabs tabs-bordered bg-base-200 px-4 pt-2">
-            <button 
-              className={`tab ${consoleTab === 'testcase' ? 'tab-active font-semibold' : ''}`}
-              onClick={() => setConsoleTab('testcase')}
-            >
-              <Play className="w-4 h-4 mr-1" />
-              Test Results
-            </button>
-            <button 
-              className={`tab ${consoleTab === 'result' ? 'tab-active font-semibold' : ''}`}
-              onClick={() => setConsoleTab('result')}
-            >
-              <Send className="w-4 h-4 mr-1" />
-              Submission Result
-            </button>
-            <button 
-              className="btn btn-ghost btn-xs absolute right-2 top-2"
-              onClick={() => setIsConsoleOpen(false)}
-            >
-              ✕
-            </button>
+            )}
+            {submitResult && (
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${submitResult.accepted ? 'bg-success/15 text-success' : 'bg-error/15 text-error'}`}>
+                {submitResult.accepted ? '🎉 Accepted' : `✗ ${submitResult.error || 'Wrong Answer'}`}
+              </span>
+            )}
           </div>
 
-          {/* Drawer Content */}
-          <div className="flex-1 overflow-y-auto p-4 bg-base-100/50">
-            {consoleTab === 'testcase' && (
-              <div className="animate-fade-in-up">
-                {runResult ? (
-                  <div className={`alert ${runResult.success ? 'alert-success shadow-success/20' : 'alert-error shadow-error/20'} mb-4 shadow-sm`}>
-                    <div className="w-full">
-                      {runResult.success ? (
-                        <div>
-                          <h4 className="font-bold flex items-center gap-2 text-lg">
-                            <CheckCircle className="w-5 h-5" />
-                            All test cases passed!
-                          </h4>
-                          <div className="mt-2 flex gap-4 text-sm font-medium opacity-80">
-                            <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {runResult.runtime}s</span>
-                            <span className="flex items-center gap-1"><Zap className="w-4 h-4" /> {runResult.memory}KB</span>
-                          </div>
-                          
-                          <div className="mt-4 space-y-3">
-                            {runResult.testCases.map((tc, i) => (
-                              <div key={i} className="card bg-base-100 shadow-sm border border-base-300">
-                                <div className="card-body p-3">
-                                  <div className="font-mono text-xs space-y-2">
-                                    <div className="flex flex-col gap-1">
-                                      <span className="font-semibold text-base-content/50">Input:</span>
-                                      <span className="bg-base-200 px-3 py-2 rounded-md">{tc.stdin}</span>
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                      <span className="font-semibold text-base-content/50">Expected:</span>
-                                      <span className="bg-base-200 px-3 py-2 rounded-md">{tc.expected_output}</span>
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                      <span className="font-semibold text-base-content/50">Output:</span>
-                                      <span className="bg-base-200 px-3 py-2 rounded-md">{tc.stdout}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div>
-                          <h4 className="font-bold flex items-center gap-2 text-lg">
-                            <XCircle className="w-5 h-5" />
-                            Test Case Failed or Error Occurred
-                          </h4>
-                          <div className="mt-4 space-y-3">
-                            {runResult.testCases.map((tc, i) => (
-                              <div key={i} className={`card bg-base-100 shadow-sm border ${tc.status_id===3 ? 'border-success/30' : 'border-error/50'}`}>
-                                <div className="card-body p-3">
-                                  <div className="font-mono text-xs space-y-2">
-                                    <div className="flex flex-col gap-1">
-                                      <span className="font-semibold text-base-content/50">Input:</span>
-                                      <span className="bg-base-200 px-3 py-2 rounded-md">{tc.stdin}</span>
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                      <span className="font-semibold text-base-content/50">Expected:</span>
-                                      <span className="bg-base-200 px-3 py-2 rounded-md">{tc.expected_output}</span>
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                      <span className="font-semibold text-base-content/50">Output:</span>
-                                      <span className="bg-base-200 px-3 py-2 rounded-md">{tc.stdout || tc.compile_output || 'No output'}</span>
-                                    </div>
-                                    <div className={`mt-2 font-semibold flex items-center gap-1 ${tc.status_id===3 ? 'text-success' : 'text-error'}`}>
-                                      {tc.status_id===3 ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                                      {tc.status_id===3 ? '✓ Passed' : '✗ Failed'}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Play className="w-10 h-10 mx-auto text-base-content/20 mb-3" />
-                    <p className="text-base-content/60 font-medium">Run your code to see test results here.</p>
-                  </div>
-                )}
-              </div>
-            )}
+          {/* Slide-up Console Drawer */}
+          <div
+            className="absolute bottom-9 left-0 right-0 bg-base-100 border-t border-base-300 z-10 flex flex-col transition-all duration-300 ease-in-out shadow-2xl"
+            style={{
+              height: isConsoleOpen ? '45%' : '0px',
+              opacity: isConsoleOpen ? 1 : 0,
+              visibility: isConsoleOpen ? 'visible' : 'hidden',
+            }}
+          >
+            {/* Drawer Tab Bar */}
+            <div className="flex items-center bg-base-200 border-b border-base-300 shrink-0">
+              {[
+                { id: 'testcase', label: 'Test Results', icon: Play },
+                { id: 'result',   label: 'Submission',  icon: Send },
+              ].map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setConsoleTab(id)}
+                  className={`flex items-center gap-1.5 px-4 py-2 text-xs font-medium border-b-2 transition-all
+                    ${consoleTab === id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-base-content/50 hover:text-base-content'}`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                </button>
+              ))}
+              <button
+                className="ml-auto px-3 py-2 text-base-content/40 hover:text-base-content text-xs"
+                onClick={() => setIsConsoleOpen(false)}
+              >✕</button>
+            </div>
 
-            {consoleTab === 'result' && (
-              <div className="animate-fade-in-up">
-                {submitResult ? (
-                  <div className={`alert ${submitResult.accepted ? 'alert-success shadow-success/20' : 'alert-error shadow-error/20'} shadow-sm`}>
-                    <div className="w-full">
-                      {submitResult.accepted ? (
-                        <div>
-                          <h4 className="font-bold text-xl flex items-center gap-2">
-                            <CheckCircle className="w-6 h-6" />
-                            🎉 Accepted!
-                          </h4>
-                          <div className="mt-4 p-4 bg-base-100 rounded-lg space-y-2 font-medium">
-                            <p className="flex justify-between border-b border-base-200 pb-2">
-                              <span className="text-base-content/60">Test Cases Passed</span>
-                              <span className="text-success">{submitResult.passedTestCases} / {submitResult.totalTestCases}</span>
-                            </p>
-                            <p className="flex justify-between border-b border-base-200 pb-2 pt-2">
-                              <span className="text-base-content/60">Runtime</span>
-                              <span>{submitResult.runtime} sec</span>
-                            </p>
-                            <p className="flex justify-between pt-2">
-                              <span className="text-base-content/60">Memory Usage</span>
-                              <span>{submitResult.memory} KB</span>
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div>
-                          <h4 className="font-bold text-xl flex items-center gap-2">
-                            <XCircle className="w-6 h-6" />
-                            ❌ {submitResult.error}
-                          </h4>
-                          <div className="mt-4 p-4 bg-base-100 rounded-lg space-y-2 font-medium">
-                            <p className="flex justify-between">
-                              <span className="text-base-content/60">Test Cases Passed</span>
-                              <span className="text-error">{submitResult.passedTestCases} / {submitResult.totalTestCases}</span>
-                            </p>
-                          </div>
-                        </div>
-                      )}
+            {/* Drawer Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+
+              {/* Test Results Panel */}
+              {consoleTab === 'testcase' && (
+                <div className="space-y-3">
+                  {runResult ? (
+                    <>
+                      {/* Summary bar */}
+                      <div className={`flex items-center gap-3 p-3 rounded-xl text-sm font-semibold
+                        ${runResult.success ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
+                        {runResult.success
+                          ? <><CheckCircle className="w-4 h-4" /> All test cases passed</>
+                          : <><XCircle className="w-4 h-4" /> Some test cases failed</>}
+                        {runResult.runtime && (
+                          <span className="ml-auto flex items-center gap-3 text-xs font-normal opacity-70">
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{runResult.runtime}s</span>
+                            <span className="flex items-center gap-1"><Zap className="w-3 h-3" />{runResult.memory}KB</span>
+                          </span>
+                        )}
+                      </div>
+                      {runResult.testCases?.map((tc, i) => (
+                        <TestCaseCard key={i} tc={tc} index={i} passed={tc.status_id === 3} />
+                      ))}
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-10 text-base-content/30">
+                      <Play className="w-8 h-8 mb-2" />
+                      <p className="text-sm">Run your code to see test results</p>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Send className="w-10 h-10 mx-auto text-base-content/20 mb-3" />
-                    <p className="text-base-content/60 font-medium">Submit your solution to get the final evaluation.</p>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+
+              {/* Submission Result Panel */}
+              {consoleTab === 'result' && (
+                <div>
+                  {submitResult ? (
+                    <div className={`rounded-2xl border-2 p-5 ${submitResult.accepted ? 'border-success/40 bg-success/5' : 'border-error/40 bg-error/5'}`}>
+                      <h3 className={`text-xl font-bold flex items-center gap-2 mb-4 ${submitResult.accepted ? 'text-success' : 'text-error'}`}>
+                        {submitResult.accepted
+                          ? <><CheckCircle className="w-6 h-6" /> 🎉 Accepted!</>
+                          : <><XCircle className="w-6 h-6" /> {submitResult.error || 'Wrong Answer'}</>}
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between py-2 border-b border-base-300">
+                          <span className="text-base-content/60">Test Cases</span>
+                          <span className={`font-semibold ${submitResult.accepted ? 'text-success' : 'text-error'}`}>
+                            {submitResult.passedTestCases} / {submitResult.totalTestCases}
+                          </span>
+                        </div>
+                        {submitResult.runtime && (
+                          <div className="flex justify-between py-2 border-b border-base-300">
+                            <span className="text-base-content/60">Runtime</span>
+                            <span className="font-medium flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{submitResult.runtime}s</span>
+                          </div>
+                        )}
+                        {submitResult.memory && (
+                          <div className="flex justify-between py-2">
+                            <span className="text-base-content/60">Memory</span>
+                            <span className="font-medium flex items-center gap-1"><Zap className="w-3.5 h-3.5" />{submitResult.memory} KB</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-10 text-base-content/30">
+                      <Send className="w-8 h-8 mb-2" />
+                      <p className="text-sm">Submit your code for final evaluation</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
