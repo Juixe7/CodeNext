@@ -7,6 +7,8 @@ import ChatAi from '../components/ChatAi';
 import Editorial from '../components/Editorial';
 import { Code, Play, Send, ArrowLeft, FileText, Video, MessageSquare, History, CheckCircle, XCircle, Clock, Zap, Copy, Check, Sparkles, ChevronUp, Terminal } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
+import ProblemTimer from '../components/ProblemTimer';
+import AICodeReview from '../components/AICodeReview';
 
 const langMap = { cpp: 'C++', java: 'Java', javascript: 'JavaScript' };
 
@@ -93,6 +95,7 @@ const ProblemPage = () => {
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [consoleTab, setConsoleTab] = useState('testcase');
   const [showAccepted, setShowAccepted] = useState(false);
+  const [lastSubmit, setLastSubmit] = useState(null);
   const editorRef = useRef(null);
   const { problemId } = useParams();
 
@@ -150,6 +153,7 @@ const ProblemPage = () => {
     try {
       const response = await axiosClient.post(`/submission/submit/${problemId}`, { code, language: selectedLanguage });
       setSubmitResult(response.data);
+      setLastSubmit(response.data);
       setConsoleTab('result');
       setIsConsoleOpen(true);
       if (response.data.accepted) {
@@ -206,6 +210,7 @@ const ProblemPage = () => {
         )}
 
         <div className="flex items-center gap-2 shrink-0">
+          <ProblemTimer />
           {loading && <span className="loading loading-spinner loading-xs text-primary" />}
           <ThemeToggle size="sm" />
         </div>
@@ -385,6 +390,7 @@ const ProblemPage = () => {
                   : <Send className="w-3.5 h-3.5" />}
                 Submit
               </button>
+              <AICodeReview code={code} language={selectedLanguage} problem={problem} lastSubmit={lastSubmit} />
             </div>
           </div>
 

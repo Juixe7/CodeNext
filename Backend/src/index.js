@@ -13,6 +13,7 @@ const problemRouter = require("./routes/problemCreator");
 const submitRouter = require("./routes/submit");
 const aiRouter = require("./routes/aiChatting");
 const videoRouter = require("./routes/videoCreator");
+const featuresRouter = require("./routes/userFeatures");
 
 dotenv.config();
 
@@ -75,6 +76,7 @@ app.use("/problem", problemRouter);
 app.use("/submission", submitRouter);
 app.use("/ai", aiRouter);
 app.use("/video", videoRouter);
+app.use("/user", featuresRouter);
 
 const startServer = async () => {
   try {

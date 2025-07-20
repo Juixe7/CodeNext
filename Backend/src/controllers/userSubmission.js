@@ -2,6 +2,7 @@ const Problem = require("../models/problem");
 const Submission = require("../models/submission");
 const User = require("../models/user");
 const {getLanguageById,submitBatch,submitToken} = require("../utils/problemUtility");
+const { updateStreak } = require('./userFeatures');
 
 const submitCode = async (req,res)=>{
    
@@ -103,9 +104,13 @@ const submitCode = async (req,res)=>{
     
     // req.result == user Information
 
-    if(!req.result.problemSolved.includes(problemId)){
-      req.result.problemSolved.push(problemId);
-      await req.result.save();
+    if(status === 'accepted'){
+      if(!req.result.problemSolved.includes(problemId)){
+        req.result.problemSolved.push(problemId);
+        await req.result.save();
+      }
+      // Update daily streak
+      await updateStreak(req.result._id);
     }
     
     const accepted = (status == 'accepted')

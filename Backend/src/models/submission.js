@@ -47,7 +47,7 @@ const submissionSchema = new Schema({
         type:Number,
         default:0
     }
-})
+}, { timestamps: true })
 
 const Submission = mongoose.model('submission',submissionSchema);
 

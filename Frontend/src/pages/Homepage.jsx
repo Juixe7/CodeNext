@@ -3,9 +3,10 @@ import { NavLink } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import axiosClient from '../utils/axiosClient';
 import { logoutUser } from '../authSlice';
-import { Code, Trophy, Search, User, LogOut, Settings, BookOpen, TrendingUp, CheckCircle } from 'lucide-react';
+import { Code, Trophy, Search, User, LogOut, Settings, BookOpen, TrendingUp, CheckCircle, Flame } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import logoRoadCode from '../assets/RoadCodeLogo.jpg';
+import ActivityHeatmap from '../components/ActivityHeatmap';
 
 // Skeleton row for problem list
 const ProblemSkeleton = () => (
@@ -46,6 +47,8 @@ function Homepage() {
   const [problems, setProblems] = useState([]);
   const [solvedProblems, setSolvedProblems] = useState([]);
   const [loadingProblems, setLoadingProblems] = useState(true);
+  const [bookmarked, setBookmarked] = useState(new Set());
+  const [streak, setStreak] = useState(0);
   const [filters, setFilters] = useState({ difficulty: 'all', tag: 'all', status: 'all' });
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -65,10 +68,27 @@ function Homepage() {
       } catch {}
     };
     fetchAll();
-    if (user) fetchSolved();
+    if (user) {
+      fetchSolved();
+      axiosClient.get('/user/streak').then(r => setStreak(r.data.streak || 0)).catch(() => {});
+      axiosClient.get('/user/profile').then(r => {
+        const ids = (r.data.bookmarkedProblems || []).map(b => b._id || b);
+        setBookmarked(new Set(ids));
+      }).catch(() => {});
+    }
   }, [user]);
 
-  const handleLogout = () => { dispatch(logoutUser()); setSolvedProblems([]); };
+  const handleLogout = () => { dispatch(logoutUser()); setSolvedProblems([]); setBookmarked(new Set()); };
+
+  const toggleBookmark = async (e, problemId) => {
+    e.preventDefault(); e.stopPropagation();
+    try {
+      const res = await axiosClient.post(`/user/bookmark/${problemId}`);
+      const newSet = new Set(bookmarked);
+      if (res.data.bookmarked) newSet.add(problemId); else newSet.delete(problemId);
+      setBookmarked(newSet);
+    } catch (err) { console.error(err); }
+  };
 
   const filteredProblems = problems.filter(p => {
     const diffOk   = filters.difficulty === 'all' || p.difficulty === filters.difficulty;
@@ -102,6 +122,14 @@ function Homepage() {
             <NavLink to="/admin" className="btn btn-ghost btn-sm gap-1">
               <Settings className="w-4 h-4" /> Admin
             </NavLink>
+          )}
+          <NavLink to="/leaderboard" className="btn btn-ghost btn-sm gap-1">
+            <Trophy className="w-4 h-4" /> Leaderboard
+          </NavLink>
+          {streak > 0 && (
+            <div className="flex items-center gap-1 bg-orange-400/10 text-orange-400 px-2 py-1 rounded-full text-xs font-semibold">
+              <Flame className="w-3.5 h-3.5" /> {streak} day streak
+            </div>
           )}
           <ThemeToggle size="sm" />
           <div className="dropdown dropdown-end">
@@ -201,6 +229,11 @@ function Homepage() {
           </div>
         </div>
 
+        {/* Heatmap */}
+        <div className="mb-8">
+          <ActivityHeatmap />
+        </div>
+
         {/* Search and Filters */}
         <div className="flex flex-col lg:flex-row gap-3 mb-6">
           <div className="relative flex-1">
@@ -271,23 +304,26 @@ function Homepage() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h2 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
-                        {problem.title}
-                      </h2>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`badge badge-xs ${diffBadge[problem.difficulty] || 'badge-neutral'}`}>
-                          {problem.difficulty}
-                        </span>
-                        <span className="badge badge-xs badge-outline">{problem.tags}</span>
-                      </div>
+                    <h2 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
+                      {problem.title}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`badge badge-xs ${diffBadge[problem.difficulty] || 'badge-neutral'}`}>{problem.difficulty}</span>
+                      <span className="badge badge-xs badge-outline">{problem.tags}</span>
                     </div>
-
-                    <div className="shrink-0">
-                      <span className="btn btn-primary btn-xs gap-1 group-hover:shadow-sm shadow-primary/20 transition-shadow">
-                        <Code className="w-3 h-3" />
-                        {solved ? 'Revisit' : 'Solve'}
-                      </span>
-                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={(e) => toggleBookmark(e, problem._id)}
+                      className={`btn btn-ghost btn-xs ${bookmarked.has(problem._id) ? 'text-warning' : 'text-base-content/30 hover:text-warning'}`}
+                      title={bookmarked.has(problem._id) ? 'Remove bookmark' : 'Bookmark'}
+                    >
+                      {bookmarked.has(problem._id) ? '★' : '☆'}
+                    </button>
+                    <span className="btn btn-primary btn-xs gap-1">
+                      <Code className="w-3 h-3" />{solved ? 'Revisit' : 'Solve'}
+                    </span>
+                  </div>
                   </div>
                 </NavLink>
               );

@@ -40,6 +40,18 @@ const userSchema = new Schema({
         ],
         unique:true
     },
+    bookmarkedProblems:[{
+        type:Schema.Types.ObjectId,
+        ref:'problem'
+    }],
+    streak:{
+        type:Number,
+        default:0
+    },
+    lastActiveDate:{
+        type:Date,
+        default:null
+    },
     password:{
         type:String,
         required: true
