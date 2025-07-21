@@ -4,6 +4,7 @@ import axiosClient from '../utils/axiosClient';
 import { Trophy, Medal, Award, TrendingUp, Flame, Code, ChevronUp } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import { useSelector } from 'react-redux';
+import { Helmet } from 'react-helmet-async';
 
 const RankBadge = ({ rank }) => {
   if (rank === 1) return <span className="text-2xl">🥇</span>;
@@ -27,6 +28,10 @@ export default function Leaderboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100">
+      <Helmet>
+        <title>Global Leaderboard | RoadCode</title>
+        <meta name="description" content="See the top DSA coders on RoadCode ranked by problem-solving score." />
+      </Helmet>
       {/* Navbar */}
       <nav className="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-40 border-b border-base-300 px-6">
         <div className="flex-1">

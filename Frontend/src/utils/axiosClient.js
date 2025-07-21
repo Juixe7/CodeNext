@@ -74,10 +74,23 @@ axiosClient.interceptors.response.use(
     console.error("❌ Response error:", {
       message: error.message,
       status: error.response?.status,
-      statusText: error.response?.statusText,
       url: error.config?.url,
-      baseURL: error.config?.baseURL,
     });
+
+    // Handle expired JWT — redirect to login with a toast
+    if (error.response?.status === 401) {
+      const isAuthRoute = error.config?.url?.includes('/user/check') ||
+                          error.config?.url?.includes('/user/login') ||
+                          error.config?.url?.includes('/user/register');
+      if (!isAuthRoute && typeof window !== 'undefined') {
+        // Dynamically import toast to avoid circular deps
+        import('react-hot-toast').then(({ default: toast }) => {
+          toast.error('Session expired — please log in again.', { id: 'session-expired' });
+        });
+        setTimeout(() => { window.location.href = '/login'; }, 1500);
+      }
+    }
+
     return Promise.reject(error);
   }
 );

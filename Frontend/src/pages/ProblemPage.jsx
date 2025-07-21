@@ -9,6 +9,9 @@ import { Code, Play, Send, ArrowLeft, FileText, Video, MessageSquare, History, C
 import ThemeToggle from '../components/ThemeToggle';
 import ProblemTimer from '../components/ProblemTimer';
 import AICodeReview from '../components/AICodeReview';
+import ErrorBoundary from '../components/ErrorBoundary';
+import { Helmet } from 'react-helmet-async';
+import toast from 'react-hot-toast';
 
 const langMap = { cpp: 'C++', java: 'Java', javascript: 'JavaScript' };
 
@@ -132,12 +135,21 @@ const ProblemPage = () => {
   const handleRun = async () => {
     setLoading(true);
     setRunResult(null);
+    const runToast = toast.loading('Running test cases...');
     try {
       const response = await axiosClient.post(`/submission/run/${problemId}`, { code, language: selectedLanguage });
       setRunResult(response.data);
       setConsoleTab('testcase');
       setIsConsoleOpen(true);
+      toast.dismiss(runToast);
+      if (response.data.success) {
+        toast.success('All test cases passed!', { icon: '✅' });
+      } else {
+        toast.error('Some test cases failed.', { icon: '❌' });
+      }
     } catch (error) {
+      toast.dismiss(runToast);
+      toast.error('Run failed. Check your code.');
       setRunResult({ success: false, testCases: [], error: 'Server error' });
       setConsoleTab('testcase');
       setIsConsoleOpen(true);
@@ -150,17 +162,24 @@ const ProblemPage = () => {
     setLoading(true);
     setSubmitResult(null);
     setShowAccepted(false);
+    const submitToast = toast.loading('Submitting solution...');
     try {
       const response = await axiosClient.post(`/submission/submit/${problemId}`, { code, language: selectedLanguage });
       setSubmitResult(response.data);
       setLastSubmit(response.data);
       setConsoleTab('result');
       setIsConsoleOpen(true);
+      toast.dismiss(submitToast);
       if (response.data.accepted) {
         setShowAccepted(true);
         setTimeout(() => setShowAccepted(false), 4000);
+        toast.success('🎉 Accepted! Great work!', { duration: 4000 });
+      } else {
+        toast.error(`Wrong Answer — ${response.data.passedTestCases}/${response.data.totalTestCases} passed`);
       }
     } catch (error) {
+      toast.dismiss(submitToast);
+      toast.error('Submission failed. Try again.');
       setSubmitResult(null);
       setConsoleTab('result');
       setIsConsoleOpen(true);
@@ -171,9 +190,23 @@ const ProblemPage = () => {
 
   const getMonacoLang = (lang) => lang === 'cpp' ? 'cpp' : lang;
 
+  // Keyboard shortcuts: Ctrl+Enter = Run, Ctrl+Shift+Enter = Submit
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (e.shiftKey) handleSubmitCode();
+        else handleRun();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [code, selectedLanguage]);
+
   if (loading && !problem) return <SkeletonLoader />;
 
   const diff = difficultyConfig[problem?.difficulty] || difficultyConfig.easy;
+  const pageTitle = problem ? `${problem.title} | ${problem.difficulty} | RoadCode` : 'RoadCode';
 
   const leftTabs = [
     { id: 'description', label: 'Description', icon: FileText },
@@ -185,6 +218,10 @@ const ProblemPage = () => {
 
   return (
     <div className="h-screen flex flex-col bg-base-100 overflow-hidden">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={problem?.description?.slice(0, 150)} />
+      </Helmet>
 
       {/* ── Accepted Flash Banner ── */}
       {showAccepted && (
@@ -342,7 +379,9 @@ const ProblemPage = () => {
                 {/* ── AI Tutor ── */}
                 {activeLeftTab === 'chatAI' && (
                   <div className="h-full animate-fade-in-up">
-                    <ChatAi problem={problem} />
+                    <ErrorBoundary fallbackTitle="AI Tutor unavailable" fallbackMessage="The AI tutor encountered an error. Please try refreshing.">
+                      <ChatAi problem={problem} />
+                    </ErrorBoundary>
                   </div>
                 )}
               </>

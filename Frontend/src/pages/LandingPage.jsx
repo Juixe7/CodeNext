@@ -2,6 +2,7 @@ import { NavLink } from 'react-router';
 import { Code2, Terminal, Brain, Trophy, ArrowRight, Zap, Target, Users, BookOpen } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import logoRoadCode from '../assets/RoadCodeLogo.jpg';
+import { Helmet } from 'react-helmet-async';
 
 const features = [
   {
@@ -38,6 +39,10 @@ const topics = [
 function LandingPage() {
   return (
     <div className="min-h-screen bg-base-100 flex flex-col font-sans transition-colors duration-300">
+      <Helmet>
+        <title>RoadCode — Master Algorithms &amp; Crack the Interview</title>
+        <meta name="description" content="An interactive DSA learning platform with AI hints, video editorials, and real-time code execution. Practice 200+ problems today." />
+      </Helmet>
       {/* Navbar */}
       <nav className="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-50 border-b border-base-300 px-6">
         <div className="flex-1">

@@ -7,6 +7,9 @@ import { Code, Trophy, Search, User, LogOut, Settings, BookOpen, TrendingUp, Che
 import ThemeToggle from '../components/ThemeToggle';
 import logoRoadCode from '../assets/RoadCodeLogo.jpg';
 import ActivityHeatmap from '../components/ActivityHeatmap';
+import ErrorBoundary from '../components/ErrorBoundary';
+import { Helmet } from 'react-helmet-async';
+import toast from 'react-hot-toast';
 
 // Skeleton row for problem list
 const ProblemSkeleton = () => (
@@ -82,12 +85,23 @@ function Homepage() {
 
   const toggleBookmark = async (e, problemId) => {
     e.preventDefault(); e.stopPropagation();
+    const wasBookmarked = bookmarked.has(problemId);
+    // Optimistic update
+    const newSet = new Set(bookmarked);
+    if (wasBookmarked) newSet.delete(problemId); else newSet.add(problemId);
+    setBookmarked(newSet);
     try {
       const res = await axiosClient.post(`/user/bookmark/${problemId}`);
-      const newSet = new Set(bookmarked);
-      if (res.data.bookmarked) newSet.add(problemId); else newSet.delete(problemId);
-      setBookmarked(newSet);
-    } catch (err) { console.error(err); }
+      if (res.data.bookmarked) {
+        toast.success('Bookmarked!', { icon: '⭐' });
+      } else {
+        toast('Bookmark removed', { icon: '☆' });
+      }
+    } catch (err) {
+      // Rollback on error
+      setBookmarked(bookmarked);
+      toast.error('Failed to update bookmark');
+    }
   };
 
   const filteredProblems = problems.filter(p => {
@@ -108,6 +122,10 @@ function Homepage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100 transition-colors duration-300">
+      <Helmet>
+        <title>RoadCode — Master DSA &amp; Crack Interviews</title>
+        <meta name="description" content="Practice Data Structures and Algorithms with AI-powered hints, video editorials, and real-time code execution." />
+      </Helmet>
 
       {/* Navbar */}
       <nav className="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-40 border-b border-base-300 px-6 shadow-sm">
@@ -231,7 +249,9 @@ function Homepage() {
 
         {/* Heatmap */}
         <div className="mb-8">
-          <ActivityHeatmap />
+          <ErrorBoundary fallbackTitle="Activity unavailable" fallbackMessage="Could not load your activity heatmap.">
+            <ActivityHeatmap />
+          </ErrorBoundary>
         </div>
 
         {/* Search and Filters */}
