@@ -57,7 +57,7 @@ function LandingPage() {
             </span>
           </div>
         </div>
-        <div className="flex-none gap-4">
+        <div className="flex-none flex flex-row items-center gap-2 sm:gap-4">
           <ThemeToggle size="sm" />
           <NavLink to="/login" className="btn btn-ghost btn-sm font-medium">Log in</NavLink>
           <NavLink to="/signup" className="btn btn-primary btn-sm shadow-lg shadow-primary/20">Get Started</NavLink>

@@ -130,12 +130,12 @@ function Homepage() {
       {/* Navbar */}
       <nav className="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-40 border-b border-base-300 px-6 shadow-sm">
         <div className="flex-1">
-          <NavLink to="/" className="btn btn-ghost text-xl font-bold flex items-center gap-2">
+          <NavLink to="/" className="inline-flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-base-200/50 transition-colors">
             <img src={logoRoadCode} alt="Logo" className="w-9 h-9 rounded-full object-cover shadow-sm" />
-            <span className="hidden sm:inline bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">RoadCode</span>
+            <span className="hidden sm:inline text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">RoadCode</span>
           </NavLink>
         </div>
-        <div className="flex-none flex items-center gap-3">
+        <div className="flex-none flex flex-row items-center gap-2 sm:gap-4">
           {user?.role === 'admin' && (
             <NavLink to="/admin" className="btn btn-ghost btn-sm gap-1">
               <Settings className="w-4 h-4" /> Admin
