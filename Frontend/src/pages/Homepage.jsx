@@ -135,7 +135,7 @@ function Homepage() {
             <span className="hidden sm:inline bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">RoadCode</span>
           </NavLink>
         </div>
-        <div className="flex-none gap-3">
+        <div className="flex-none flex items-center gap-3">
           {user?.role === 'admin' && (
             <NavLink to="/admin" className="btn btn-ghost btn-sm gap-1">
               <Settings className="w-4 h-4" /> Admin
