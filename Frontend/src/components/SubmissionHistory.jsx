@@ -5,6 +5,13 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { formatDistanceToNow } from 'date-fns';
 
+const safeFormatDistance = (dateString) => {
+  if (!dateString) return 'Some time ago';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'Some time ago';
+  return formatDistanceToNow(date, { addSuffix: true });
+};
+
 const statusConfig = {
   accepted:  { icon: CheckCircle, color: 'text-success',  bg: 'bg-success/10',  border: 'border-success/30',  label: 'Accepted'      },
   wrong:     { icon: XCircle,     color: 'text-error',    bg: 'bg-error/10',    border: 'border-error/30',    label: 'Wrong Answer'  },
@@ -98,7 +105,7 @@ const SubmissionHistory = ({ problemId }) => {
               <div className="flex items-center gap-3 mt-1 text-xs text-base-content/40">
                 {sub.runtime && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{sub.runtime}s</span>}
                 {sub.memory  && <span className="flex items-center gap-1"><Zap className="w-3 h-3" />{sub.memory < 1024 ? `${sub.memory}kB` : `${(sub.memory/1024).toFixed(1)}MB`}</span>}
-                <span>{formatDistanceToNow(new Date(sub.createdAt), { addSuffix: true })}</span>
+                <span>{safeFormatDistance(sub.createdAt)}</span>
               </div>
             </div>
 
@@ -148,7 +155,7 @@ const SubmissionHistory = ({ problemId }) => {
                 </span>
               )}
               <span className="ml-auto text-xs text-base-content/40">
-                {formatDistanceToNow(new Date(selectedSubmission.createdAt), { addSuffix: true })}
+                {safeFormatDistance(selectedSubmission.createdAt)}
               </span>
             </div>
 
