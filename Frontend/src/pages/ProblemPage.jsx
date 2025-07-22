@@ -12,6 +12,9 @@ import AICodeReview from '../components/AICodeReview';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
+import { useLocation, useNavigate } from 'react-router';
+import { io } from 'socket.io-client';
+import { useSelector } from 'react-redux';
 
 const langMap = { cpp: 'C++', java: 'Java', javascript: 'JavaScript' };
 
@@ -99,6 +102,16 @@ const ProblemPage = () => {
   const [consoleTab, setConsoleTab] = useState('testcase');
   const [showAccepted, setShowAccepted] = useState(false);
   const [lastSubmit, setLastSubmit] = useState(null);
+  
+  // Battle state
+  const { user } = useSelector(state => state.auth);
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const matchId = searchParams.get('matchId');
+  const [battleSocket, setBattleSocket] = useState(null);
+  const [battleWinner, setBattleWinner] = useState(null); // null, 'me', or 'opponent'
+  const navigate = useNavigate();
+
   const editorRef = useRef(null);
   const { problemId } = useParams();
 
@@ -120,7 +133,34 @@ const ProblemPage = () => {
       }
     };
     fetchProblem();
-  }, [problemId]);
+
+    // Setup Battle Socket if in a match
+    if (matchId) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const socket = io(window.location.origin.includes('localhost') ? 'http://localhost:3000' : window.location.origin, {
+          auth: { token }
+        });
+        setBattleSocket(socket);
+
+        socket.on('match_won', (data) => {
+          if (data.winnerId === user?._id) {
+            setBattleWinner('me');
+          } else {
+            setBattleWinner('opponent');
+            toast.error(`${data.winner} has solved the problem! You lose.`, { duration: 6000, icon: '💀' });
+          }
+        });
+
+        socket.on('opponent_progress', (data) => {
+          // Could show a toast or small UI indicator
+          console.log("Opponent:", data.progress);
+        });
+
+        return () => socket.disconnect();
+      }
+    }
+  }, [problemId, matchId, user]);
 
   useEffect(() => {
     if (problem) {
@@ -137,6 +177,8 @@ const ProblemPage = () => {
     setRunResult(null);
     const runToast = toast.loading('Running test cases...');
     try {
+      if (battleSocket) battleSocket.emit('progress_update', { matchId, progress: 'Running tests...' });
+
       const response = await axiosClient.post(`/submission/run/${problemId}`, { code, language: selectedLanguage });
       setRunResult(response.data);
       setConsoleTab('testcase');
@@ -222,6 +264,34 @@ const ProblemPage = () => {
         <title>{pageTitle}</title>
         <meta name="description" content={problem?.description?.slice(0, 150)} />
       </Helmet>
+
+      {/* ── Battle Overlay ── */}
+      {matchId && battleWinner === 'opponent' && (
+        <div className="absolute inset-0 z-50 bg-base-300/80 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in-up">
+          <div className="bg-base-100 p-8 rounded-3xl shadow-2xl border border-error/20 text-center max-w-md w-full">
+            <XCircle className="w-16 h-16 text-error mx-auto mb-4 animate-bounce" />
+            <h2 className="text-3xl font-bold mb-2">Defeat!</h2>
+            <p className="text-base-content/60 mb-6">Your opponent solved it first.</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={() => navigate('/battle')} className="btn btn-primary">Find New Match</button>
+              <button onClick={() => setBattleWinner(null)} className="btn btn-ghost">Review Code</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {matchId && battleWinner === 'me' && (
+        <div className="absolute inset-0 z-50 bg-base-300/80 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in-up">
+          <div className="bg-base-100 p-8 rounded-3xl shadow-2xl border border-success/20 text-center max-w-md w-full">
+            <Trophy className="w-16 h-16 text-warning mx-auto mb-4 animate-bounce" />
+            <h2 className="text-3xl font-bold mb-2">Victory!</h2>
+            <p className="text-base-content/60 mb-6">You solved it before your opponent! +25 Elo</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={() => navigate('/battle')} className="btn btn-primary">Next Battle</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Accepted Flash Banner ── */}
       {showAccepted && (

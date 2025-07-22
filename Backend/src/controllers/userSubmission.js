@@ -111,6 +111,46 @@ const submitCode = async (req,res)=>{
       }
       // Update daily streak
       await updateStreak(req.result._id);
+
+      // --- DSA Battle Hook ---
+      const Match = require('../models/match');
+      const User = require('../models/user');
+      const { getIo } = require('../config/socket');
+
+      const activeMatch = await Match.findOne({
+        players: req.result._id,
+        status: 'ongoing'
+      });
+
+      if (activeMatch) {
+        activeMatch.winner = req.result._id;
+        activeMatch.status = 'finished';
+        await activeMatch.save();
+
+        // Update User Elo
+        const p1 = await User.findById(activeMatch.players[0]);
+        const p2 = await User.findById(activeMatch.players[1]);
+        
+        const winner = p1._id.equals(req.result._id) ? p1 : p2;
+        const loser = p1._id.equals(req.result._id) ? p2 : p1;
+
+        winner.eloRating += 25;
+        winner.battleWins += 1;
+        loser.eloRating = Math.max(0, loser.eloRating - 15);
+        loser.battleLosses += 1;
+
+        await winner.save();
+        await loser.save();
+
+        const io = getIo();
+        if (io) {
+          io.to(activeMatch._id.toString()).emit('match_won', {
+            winner: req.result.firstName,
+            winnerId: req.result._id
+          });
+        }
+      }
+      // ------------------------
     }
     
     const accepted = (status == 'accepted')

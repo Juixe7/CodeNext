@@ -78,6 +78,9 @@ app.use("/ai", aiRouter);
 app.use("/video", videoRouter);
 app.use("/user", featuresRouter);
 
+const http = require("http");
+const { initializeSocket } = require("./config/socket");
+
 const startServer = async () => {
   try {
     console.log("🚀 Starting server initialization...");
@@ -94,8 +97,13 @@ const startServer = async () => {
     }
 
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-      console.log(`🎉 Server listening on port ${PORT}`);
+    
+    // Create HTTP server & initialize Socket.io
+    const server = http.createServer(app);
+    initializeSocket(server);
+
+    server.listen(PORT, () => {
+      console.log(`🎉 Server & Socket.io listening on port ${PORT}`);
     });
   } catch (err) {
     console.error("💥 Fatal startup error:", err.message);
