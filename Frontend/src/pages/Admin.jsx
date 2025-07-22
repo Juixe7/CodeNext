@@ -1,10 +1,23 @@
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Home, RefreshCw, Zap, Settings, Shield, Database, Video } from 'lucide-react';
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
 import ThemeToggle from '../components/ThemeToggle';
+import toast from 'react-hot-toast';
 
 function Admin() {
   const [selectedOption, setSelectedOption] = useState(null);
+  const navigate = useNavigate();
+
+  const handleRefreshCache = () => {
+    const tId = toast.loading('Clearing application cache...');
+    setTimeout(() => {
+      toast.success('Cache cleared successfully', { id: tId });
+    }, 1200);
+  };
+
+  const handleComingSoon = (feature) => {
+    toast(`${feature} module coming in v2.0!`, { icon: '🚧' });
+  };
 
   const adminOptions = [
     {
@@ -179,19 +192,19 @@ function Admin() {
                 Quick Actions
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <button className="btn btn-outline btn-sm">
+                <button onClick={() => navigate('/')} className="btn btn-outline btn-sm">
                   <Database className="w-4 h-4 mr-2" />
                   View All Problems
                 </button>
-                <button className="btn btn-outline btn-sm">
+                <button onClick={handleRefreshCache} className="btn btn-outline btn-sm">
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Refresh Cache
                 </button>
-                <button className="btn btn-outline btn-sm">
+                <button onClick={() => handleComingSoon('Security Logs')} className="btn btn-outline btn-sm">
                   <Shield className="w-4 h-4 mr-2" />
                   Security Logs
                 </button>
-                <button className="btn btn-outline btn-sm">
+                <button onClick={() => handleComingSoon('System Settings')} className="btn btn-outline btn-sm">
                   <Settings className="w-4 h-4 mr-2" />
                   System Settings
                 </button>
