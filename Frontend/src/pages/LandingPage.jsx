@@ -24,6 +24,11 @@ const features = [
     icon: <Zap className="w-6 h-6" />,
     title: "Lightning Fast Execution",
     description: "Experience zero-lag code compilation and execution powered by Judge0 infrastructure."
+  },
+  {
+    icon: <Users className="w-6 h-6" />,
+    title: "Live DSA Battles",
+    description: "Compete in real-time against other developers. Matchmake instantly and race to solve algorithms."
   }
 ];
 
@@ -66,9 +71,31 @@ function LandingPage() {
 
       {/* Hero Section */}
       <main className="flex-grow">
-        <section className="relative px-6 py-24 lg:py-32 overflow-hidden flex flex-col items-center justify-center text-center min-h-[80vh]">
+        <section className="relative px-6 py-24 lg:py-32 overflow-hidden flex flex-col items-center justify-center text-center min-h-[85vh]">
           {/* Background Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] -z-10 opacity-50 pointer-events-none"></div>
+          
+          {/* Floating Icons */}
+          <div className="absolute top-1/4 left-[10%] animate-bounce hidden lg:block opacity-60">
+            <div className="w-16 h-16 bg-base-100 rounded-2xl shadow-xl flex items-center justify-center border border-base-300">
+              <Code2 className="w-8 h-8 text-primary" />
+            </div>
+          </div>
+          <div className="absolute top-1/3 right-[15%] animate-pulse hidden lg:block opacity-60">
+            <div className="w-14 h-14 bg-base-100 rounded-2xl shadow-xl flex items-center justify-center border border-base-300">
+              <Brain className="w-7 h-7 text-accent" />
+            </div>
+          </div>
+          <div className="absolute bottom-1/4 left-[20%] animate-bounce hidden lg:block opacity-60" style={{ animationDelay: '1s' }}>
+            <div className="w-12 h-12 bg-base-100 rounded-2xl shadow-xl flex items-center justify-center border border-base-300">
+              <Trophy className="w-6 h-6 text-warning" />
+            </div>
+          </div>
+          <div className="absolute bottom-1/3 right-[10%] animate-pulse hidden lg:block opacity-60" style={{ animationDelay: '1.5s' }}>
+            <div className="w-20 h-20 bg-base-100 rounded-3xl shadow-xl flex items-center justify-center border border-base-300">
+              <Terminal className="w-10 h-10 text-secondary" />
+            </div>
+          </div>
           
           <div className="badge badge-primary badge-outline mb-8 py-3 px-4 shadow-sm">
             <span className="flex items-center gap-2 text-sm font-medium">

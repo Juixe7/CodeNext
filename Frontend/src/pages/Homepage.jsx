@@ -7,6 +7,7 @@ import { Code, Trophy, Search, User, LogOut, Settings, BookOpen, TrendingUp, Che
 import ThemeToggle from '../components/ThemeToggle';
 import logoRoadCode from '../assets/RoadCodeLogo.jpg';
 import ActivityHeatmap from '../components/ActivityHeatmap';
+import UserSearch from '../components/UserSearch';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
@@ -136,6 +137,9 @@ function Homepage() {
           </NavLink>
         </div>
         <div className="flex-none flex flex-row items-center gap-2 sm:gap-4">
+          <div className="hidden md:block">
+            <UserSearch />
+          </div>
           {user?.role === 'admin' && (
             <NavLink to="/admin" className="btn btn-ghost btn-sm gap-1">
               <Settings className="w-4 h-4" /> Admin
@@ -167,6 +171,11 @@ function Homepage() {
                 </div>
               </li>
               <div className="divider my-1" />
+              <li>
+                <NavLink to="/profile" className="hover:bg-base-200 gap-2">
+                  <User className="w-4 h-4" /> My Profile
+                </NavLink>
+              </li>
               <li>
                 <button onClick={handleLogout} className="text-error hover:bg-error/10 gap-2">
                   <LogOut className="w-4 h-4" /> Logout

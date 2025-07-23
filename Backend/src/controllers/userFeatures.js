@@ -176,5 +176,84 @@ const getStreak = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+// ──────────────────────────────────────────────────────────────
+// GET /user/search?q= — Search users by name/email
+// ──────────────────────────────────────────────────────────────
+const searchUsers = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q || q.length < 2) return res.status(200).json([]);
+        
+        const regex = new RegExp(q, 'i');
+        const users = await User.find({
+            $or: [{ firstName: regex }, { lastName: regex }, { emailId: regex }],
+            role: 'user'
+        }).select('firstName lastName emailId eloRating streak').limit(10);
+        
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
 
-module.exports = { getProfile, getHeatmap, getLeaderboard, toggleBookmark, getStreak, updateStreak };
+// ──────────────────────────────────────────────────────────────
+// GET /user/public-profile/:id — Get another user's profile
+// ──────────────────────────────────────────────────────────────
+const getPublicProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+            .select('-password -emailId')
+            .populate({ path: 'friends', select: 'firstName lastName eloRating' });
+            
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        
+        const submissions = await Submission.find({ userId: user._id })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .populate({ path: 'problemId', select: 'title difficulty' });
+
+        // Check if the requesting user is a friend of this profile
+        const isFriend = req.result ? user.friends.some(f => f._id.toString() === req.result._id.toString()) : false;
+
+        res.status(200).json({
+            profile: user,
+            recentSubmissions: submissions,
+            isFriend
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// POST /user/friend/:id — Add or remove a friend
+// ──────────────────────────────────────────────────────────────
+const toggleFriend = async (req, res) => {
+    try {
+        const currentUserId = req.result._id;
+        const targetUserId = req.params.id;
+        
+        if (currentUserId.toString() === targetUserId) {
+            return res.status(400).json({ message: 'Cannot friend yourself' });
+        }
+
+        const currentUser = await User.findById(currentUserId);
+        const idx = currentUser.friends.indexOf(targetUserId);
+        
+        let isFriend;
+        if (idx === -1) {
+            currentUser.friends.push(targetUserId);
+            isFriend = true;
+        } else {
+            currentUser.friends.splice(idx, 1);
+            isFriend = false;
+        }
+        await currentUser.save();
+        
+        res.status(200).json({ isFriend, friends: currentUser.friends });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+module.exports = { getProfile, getHeatmap, getLeaderboard, toggleBookmark, getStreak, updateStreak, searchUsers, getPublicProfile, toggleFriend };
