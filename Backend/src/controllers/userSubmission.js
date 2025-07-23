@@ -146,7 +146,13 @@ const submitCode = async (req,res)=>{
         if (io) {
           io.to(activeMatch._id.toString()).emit('match_won', {
             winner: req.result.firstName,
-            winnerId: req.result._id
+            winnerId: req.result._id,
+            stats: {
+              winnerElo: winner.eloRating,
+              loserElo: loser.eloRating,
+              winnerEloChange: "+25",
+              loserEloChange: "-15"
+            }
           });
         }
       }

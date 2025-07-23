@@ -110,6 +110,7 @@ const ProblemPage = () => {
   const matchId = searchParams.get('matchId');
   const [battleSocket, setBattleSocket] = useState(null);
   const [battleWinner, setBattleWinner] = useState(null); // null, 'me', or 'opponent'
+  const [matchStats, setMatchStats] = useState(null);
   const navigate = useNavigate();
 
   const editorRef = useRef(null);
@@ -144,12 +145,14 @@ const ProblemPage = () => {
       setBattleSocket(socket);
 
       socket.on('match_won', (data) => {
+        setMatchStats(data.stats);
         if (data.winnerId === user?._id) {
           setBattleWinner('me');
         } else {
           setBattleWinner('opponent');
           toast.error(`${data.winner} has solved the problem! You lose.`, { duration: 6000, icon: '💀' });
         }
+        socket.disconnect(); // Terminate the active session
       });
 
       socket.on('opponent_progress', (data) => {
@@ -271,6 +274,21 @@ const ProblemPage = () => {
             <XCircle className="w-16 h-16 text-error mx-auto mb-4 animate-bounce" />
             <h2 className="text-3xl font-bold mb-2">Defeat!</h2>
             <p className="text-base-content/60 mb-6">Your opponent solved it first.</p>
+            
+            {matchStats && (
+              <div className="bg-base-200 rounded-xl p-4 mb-6 text-left">
+                <h3 className="font-bold border-b border-base-300 pb-2 mb-3">Match Results</h3>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-base-content/70">Your Elo</span>
+                  <span className="font-bold text-error">{matchStats.loserElo} <span className="text-xs">({matchStats.loserEloChange})</span></span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-base-content/70">Opponent Elo</span>
+                  <span className="font-bold text-success">{matchStats.winnerElo} <span className="text-xs">({matchStats.winnerEloChange})</span></span>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-center gap-4">
               <button onClick={() => navigate('/battle')} className="btn btn-primary">Find New Match</button>
               <button onClick={() => setBattleWinner(null)} className="btn btn-ghost">Review Code</button>
@@ -284,7 +302,22 @@ const ProblemPage = () => {
           <div className="bg-base-100 p-8 rounded-3xl shadow-2xl border border-success/20 text-center max-w-md w-full">
             <Trophy className="w-16 h-16 text-warning mx-auto mb-4 animate-bounce" />
             <h2 className="text-3xl font-bold mb-2">Victory!</h2>
-            <p className="text-base-content/60 mb-6">You solved it before your opponent! +25 Elo</p>
+            <p className="text-base-content/60 mb-6">You solved it before your opponent!</p>
+
+            {matchStats && (
+              <div className="bg-base-200 rounded-xl p-4 mb-6 text-left">
+                <h3 className="font-bold border-b border-base-300 pb-2 mb-3">Match Results</h3>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-base-content/70">Your Elo</span>
+                  <span className="font-bold text-success">{matchStats.winnerElo} <span className="text-xs">({matchStats.winnerEloChange})</span></span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-base-content/70">Opponent Elo</span>
+                  <span className="font-bold text-error">{matchStats.loserElo} <span className="text-xs">({matchStats.loserEloChange})</span></span>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-center gap-4">
               <button onClick={() => navigate('/battle')} className="btn btn-primary">Next Battle</button>
             </div>
