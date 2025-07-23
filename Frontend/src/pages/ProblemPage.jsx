@@ -138,7 +138,9 @@ const ProblemPage = () => {
     if (matchId) {
       const token = localStorage.getItem('token');
       if (token) {
-        const socket = io(window.location.origin.includes('localhost') ? 'http://localhost:3000' : window.location.origin, {
+        const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        const SOCKET_URL = isLocalhost ? "http://localhost:3000" : "https://roadcode-a-coding-platform.onrender.com";
+        const socket = io(SOCKET_URL, {
           auth: { token }
         });
         setBattleSocket(socket);
