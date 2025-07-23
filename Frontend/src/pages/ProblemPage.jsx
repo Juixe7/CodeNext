@@ -135,32 +135,29 @@ const ProblemPage = () => {
     fetchProblem();
 
     // Setup Battle Socket if in a match
-    if (matchId) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-        const SOCKET_URL = isLocalhost ? "http://localhost:3000" : "https://roadcode-a-coding-platform.onrender.com";
-        const socket = io(SOCKET_URL, {
-          auth: { token }
-        });
-        setBattleSocket(socket);
+    if (matchId && user) {
+      const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+      const SOCKET_URL = isLocalhost ? "http://localhost:3000" : "https://roadcode-a-coding-platform.onrender.com";
+      const socket = io(SOCKET_URL, {
+        withCredentials: true
+      });
+      setBattleSocket(socket);
 
-        socket.on('match_won', (data) => {
-          if (data.winnerId === user?._id) {
-            setBattleWinner('me');
-          } else {
-            setBattleWinner('opponent');
-            toast.error(`${data.winner} has solved the problem! You lose.`, { duration: 6000, icon: '💀' });
-          }
-        });
+      socket.on('match_won', (data) => {
+        if (data.winnerId === user?._id) {
+          setBattleWinner('me');
+        } else {
+          setBattleWinner('opponent');
+          toast.error(`${data.winner} has solved the problem! You lose.`, { duration: 6000, icon: '💀' });
+        }
+      });
 
-        socket.on('opponent_progress', (data) => {
-          // Could show a toast or small UI indicator
-          console.log("Opponent:", data.progress);
-        });
+      socket.on('opponent_progress', (data) => {
+        // Could show a toast or small UI indicator
+        console.log("Opponent:", data.progress);
+      });
 
-        return () => socket.disconnect();
-      }
+      return () => socket.disconnect();
     }
   }, [problemId, matchId, user]);
 

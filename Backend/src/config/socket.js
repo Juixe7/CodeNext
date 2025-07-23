@@ -14,19 +14,29 @@ const initializeSocket = (server) => {
                 "http://localhost:5173",
                 "https://road-code-tau.vercel.app",
             ],
-            methods: ["GET", "POST"]
+            methods: ["GET", "POST"],
+            credentials: true
         }
     });
 
     // Middleware to authenticate socket connection
     io.use((socket, next) => {
-        const token = socket.handshake.auth.token;
+        let token = null;
+        if (socket.handshake.headers.cookie) {
+            const cookies = socket.handshake.headers.cookie.split(';').reduce((res, c) => {
+                const [key, val] = c.trim().split('=');
+                res[key] = val;
+                return res;
+            }, {});
+            token = cookies.token;
+        }
+
         if (!token) {
             return next(new Error('Authentication error'));
         }
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            socket.user = decoded; // Store user details in socket
+            const decoded = jwt.verify(token, process.env.JWT_KEY);
+            socket.user = { id: decoded._id, ...decoded }; // Store user details in socket
             next();
         } catch (err) {
             next(new Error('Authentication error'));

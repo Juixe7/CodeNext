@@ -15,15 +15,14 @@ export default function BattleLobby() {
 
   useEffect(() => {
     // Only connect when user enters lobby
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!user) return;
 
     // Point to Render backend in production
     const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     const SOCKET_URL = isLocalhost ? "http://localhost:3000" : "https://roadcode-a-coding-platform.onrender.com";
     
     const newSocket = io(SOCKET_URL, {
-      auth: { token }
+      withCredentials: true
     });
 
     setSocket(newSocket);
