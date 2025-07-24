@@ -113,48 +113,54 @@ const submitCode = async (req,res)=>{
       await updateStreak(req.result._id);
 
       // --- DSA Battle Hook ---
-      const Match = require('../models/match');
-      const User = require('../models/user');
-      const { getIo } = require('../config/socket');
+      try {
+        const Match = require('../models/match');
+        const User = require('../models/user');
+        const { getIo } = require('../config/socket');
 
-      const activeMatch = await Match.findOne({
-        players: req.result._id,
-        status: 'ongoing'
-      });
+        const activeMatch = await Match.findOne({
+          players: req.result._id,
+          status: 'ongoing'
+        });
 
-      if (activeMatch) {
-        activeMatch.winner = req.result._id;
-        activeMatch.status = 'finished';
-        await activeMatch.save();
+        if (activeMatch) {
+          activeMatch.winner = req.result._id;
+          activeMatch.status = 'finished';
+          await activeMatch.save();
 
-        // Update User Elo
-        const p1 = await User.findById(activeMatch.players[0]);
-        const p2 = await User.findById(activeMatch.players[1]);
-        
-        const winner = p1._id.equals(req.result._id) ? p1 : p2;
-        const loser = p1._id.equals(req.result._id) ? p2 : p1;
+          // Update User Elo
+          const p1 = await User.findById(activeMatch.players[0]);
+          const p2 = await User.findById(activeMatch.players[1]);
+          
+          if (p1 && p2) {
+            const winner = p1._id.equals(req.result._id) ? p1 : p2;
+            const loser = p1._id.equals(req.result._id) ? p2 : p1;
 
-        winner.eloRating += 25;
-        winner.battleWins += 1;
-        loser.eloRating = Math.max(0, loser.eloRating - 15);
-        loser.battleLosses += 1;
+            winner.eloRating = (winner.eloRating || 1200) + 25;
+            winner.battleWins = (winner.battleWins || 0) + 1;
+            loser.eloRating = Math.max(0, (loser.eloRating || 1200) - 15);
+            loser.battleLosses = (loser.battleLosses || 0) + 1;
 
-        await winner.save();
-        await loser.save();
+            await winner.save();
+            await loser.save();
 
-        const io = getIo();
-        if (io) {
-          io.to(activeMatch._id.toString()).emit('match_won', {
-            winner: req.result.firstName,
-            winnerId: req.result._id,
-            stats: {
-              winnerElo: winner.eloRating,
-              loserElo: loser.eloRating,
-              winnerEloChange: "+25",
-              loserEloChange: "-15"
+            const io = getIo();
+            if (io) {
+              io.to(activeMatch._id.toString()).emit('match_won', {
+                winner: req.result.firstName,
+                winnerId: req.result._id,
+                stats: {
+                  winnerElo: winner.eloRating,
+                  loserElo: loser.eloRating,
+                  winnerEloChange: "+25",
+                  loserEloChange: "-15"
+                }
+              });
             }
-          });
+          }
         }
+      } catch (err) {
+        console.error("Battle hook error:", err);
       }
       // ------------------------
     }

@@ -143,9 +143,9 @@ const ProblemPage = () => {
         withCredentials: true
       });
       
-      socket.on('connect', () => {
-        socket.emit('rejoin_match', { matchId });
-      });
+      const joinRoom = () => socket.emit('rejoin_match', { matchId });
+      if (socket.connected) joinRoom();
+      else socket.on('connect', joinRoom);
 
       setBattleSocket(socket);
 
