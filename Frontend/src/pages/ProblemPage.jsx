@@ -5,7 +5,7 @@ import axiosClient from "../utils/axiosClient";
 import SubmissionHistory from "../components/SubmissionHistory";
 import ChatAi from '../components/ChatAi';
 import Editorial from '../components/Editorial';
-import { Code, Play, Send, ArrowLeft, FileText, Video, MessageSquare, History, CheckCircle, XCircle, Clock, Zap, Copy, Check, Sparkles, ChevronUp, Terminal } from 'lucide-react';
+import { Code, Play, Send, ArrowLeft, FileText, Video, MessageSquare, History, CheckCircle, XCircle, Clock, Zap, Copy, Check, Sparkles, ChevronUp, Terminal, Trophy } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import ProblemTimer from '../components/ProblemTimer';
 import AICodeReview from '../components/AICodeReview';
