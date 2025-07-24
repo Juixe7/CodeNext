@@ -142,6 +142,11 @@ const ProblemPage = () => {
       const socket = io(SOCKET_URL, {
         withCredentials: true
       });
+      
+      socket.on('connect', () => {
+        socket.emit('rejoin_match', { matchId });
+      });
+
       setBattleSocket(socket);
 
       socket.on('match_won', (data) => {

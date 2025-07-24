@@ -111,6 +111,12 @@ const initializeSocket = (server) => {
             socket.to(matchId).emit('opponent_progress', { progress });
         });
 
+        // Rejoin match room when navigating to ProblemPage
+        socket.on('rejoin_match', ({ matchId }) => {
+            socket.join(matchId);
+            console.log(`User ${socket.user.id} rejoined match room ${matchId}`);
+        });
+
         socket.on('disconnect', () => {
             waitingQueue = waitingQueue.filter(u => u.id !== socket.user.id);
             console.log(`User disconnected from socket: ${socket.user.id}`);
