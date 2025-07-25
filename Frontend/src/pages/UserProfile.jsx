@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
-import { Trophy, Users, Code, Calendar, Loader2, ArrowLeft, UserPlus, UserMinus, Flame } from 'lucide-react';
+import { Trophy, Users, Code, Calendar, Loader2, ArrowLeft, UserPlus, UserMinus, Flame, Swords, XCircle } from 'lucide-react';
 import axiosClient from '../utils/axiosClient';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
@@ -71,7 +71,7 @@ export default function UserProfile() {
     );
   }
 
-  const { profile, recentSubmissions } = profileData;
+  const { profile, recentSubmissions, recentMatches } = profileData;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100">
@@ -169,8 +169,53 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Right Column: Recent Activity */}
+          {/* Right Column: Recent Activity & Battle History */}
           <div className="lg:col-span-2 space-y-8">
+            
+            {/* Battle History */}
+            <div className="bg-base-100 rounded-3xl p-6 shadow-xl border border-base-300">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Swords className="w-5 h-5 text-warning" /> Battle History
+              </h3>
+              
+              {recentMatches && recentMatches.length > 0 ? (
+                <div className="space-y-3">
+                  {recentMatches.map(match => {
+                    const isWinner = match.winner?._id === profile._id;
+                    const opponent = match.players.find(p => p._id !== profile._id);
+                    
+                    return (
+                      <div key={match._id} className={`p-4 rounded-2xl border ${isWinner ? 'bg-success/5 border-success/20' : 'bg-error/5 border-error/20'} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4`}>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-lg flex items-center gap-2">
+                            {isWinner ? <Trophy className="w-4 h-4 text-success" /> : <XCircle className="w-4 h-4 text-error" />}
+                            {isWinner ? 'Victory' : 'Defeat'}
+                          </span>
+                          <span className="text-sm text-base-content/70 mt-1">
+                            vs <span className="font-semibold">{opponent?.firstName || 'Unknown'} {opponent?.lastName || ''}</span>
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/problem/${match.problem?._id}`)}>
+                            {match.problem?.title || 'Unknown Problem'}
+                          </p>
+                          <p className="text-xs text-base-content/50 mt-1">
+                            {new Date(match.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-base-200 rounded-2xl border border-dashed border-base-300">
+                  <Swords className="w-10 h-10 mx-auto text-base-content/20 mb-3" />
+                  <p className="text-base-content/50">No battles fought yet.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Recent Submissions */}
             <div className="bg-base-100 rounded-3xl p-6 shadow-xl border border-base-300">
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <Code className="w-5 h-5 text-primary" /> Recent Submissions

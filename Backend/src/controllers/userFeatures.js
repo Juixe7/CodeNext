@@ -1,6 +1,7 @@
 const User = require('../models/user');
 const Submission = require('../models/submission');
 const Problem = require('../models/problem');
+const Match = require('../models/match');
 
 // ──────────────────────────────────────────────────────────────
 // Helper: update streak when user gets an accepted submission
@@ -212,12 +213,23 @@ const getPublicProfile = async (req, res) => {
             .limit(10)
             .populate({ path: 'problemId', select: 'title difficulty' });
 
+        const recentMatches = await Match.find({ 
+            players: user._id, 
+            status: 'finished' 
+        })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .populate({ path: 'problem', select: 'title difficulty' })
+            .populate({ path: 'players', select: 'firstName lastName eloRating' })
+            .populate({ path: 'winner', select: 'firstName lastName' });
+
         // Check if the requesting user is a friend of this profile
         const isFriend = req.result ? user.friends.some(f => f._id.toString() === req.result._id.toString()) : false;
 
         res.status(200).json({
             profile: user,
             recentSubmissions: submissions,
+            recentMatches: recentMatches,
             isFriend
         });
     } catch (err) {
