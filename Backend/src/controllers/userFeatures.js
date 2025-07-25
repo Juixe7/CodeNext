@@ -79,7 +79,7 @@ const getProfile = async (req, res) => {
 // ──────────────────────────────────────────────────────────────
 const getHeatmap = async (req, res) => {
     try {
-        const userId = req.result._id;
+        const userId = req.query.userId || req.result._id;
         const since = new Date();
         since.setFullYear(since.getFullYear() - 1);
 

@@ -72,7 +72,7 @@ export default function UserSearch() {
               }}
             >
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
-                {user.firstName[0]}
+                {user?.firstName?.[0]?.toUpperCase() || '?'}
               </div>
               <div className="flex-1 overflow-hidden">
                 <p className="text-sm font-semibold truncate">{user.firstName} {user.lastName}</p>

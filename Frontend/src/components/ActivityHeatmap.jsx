@@ -30,17 +30,18 @@ const getDateGrid = () => {
 
 const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-export default function ActivityHeatmap() {
+export default function ActivityHeatmap({ userId }) {
   const [heatmap, setHeatmap] = useState({});
   const [loading, setLoading] = useState(true);
   const [tooltip, setTooltip] = useState(null);
 
   useEffect(() => {
-    axiosClient.get('/user/heatmap')
+    const url = userId ? `/user/heatmap?userId=${userId}` : '/user/heatmap';
+    axiosClient.get(url)
       .then(r => setHeatmap(r.data))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [userId]);
 
   const dates = getDateGrid();
   // Pad front so first day aligns to correct weekday

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
-import { Trophy, Users, Code, Calendar, Loader2, ArrowLeft, UserPlus, UserMinus, Flame, Swords, XCircle } from 'lucide-react';
+import { Trophy, Users, Code, Calendar, Loader2, ArrowLeft, UserPlus, UserMinus, Flame, Swords, XCircle, Activity } from 'lucide-react';
 import axiosClient from '../utils/axiosClient';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
+import ActivityHeatmap from '../components/ActivityHeatmap';
 
 export default function UserProfile() {
   const { id } = useParams();
@@ -95,25 +96,28 @@ export default function UserProfile() {
           <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
             {/* Avatar Placeholder */}
             <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-4xl font-bold text-primary-content shadow-lg shadow-primary/30">
-              {profile.firstName[0].toUpperCase()}
+              {profile?.firstName?.[0]?.toUpperCase() || '?'}
             </div>
 
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-4xl font-extrabold mb-2">{profile.firstName} {profile.lastName}</h1>
+              <h1 className="text-4xl font-extrabold mb-2">{profile?.firstName || 'Unknown'} {profile?.lastName || 'User'}</h1>
               <p className="text-base-content/60 text-lg mb-4 flex items-center justify-center md:justify-start gap-2">
                 <Trophy className="w-5 h-5 text-warning" />
-                Elo Rating: <span className="font-bold text-base-content">{profile.eloRating || 1200}</span>
+                Elo Rating: <span className="font-bold text-base-content">{profile?.eloRating || 1200}</span>
               </p>
 
               <div className="flex flex-wrap justify-center md:justify-start gap-3">
                 <div className="badge badge-lg badge-outline gap-2 p-4">
-                  <Flame className="w-4 h-4 text-error" /> {profile.streak || 0} Day Streak
+                  <Flame className="w-4 h-4 text-error" /> {profile?.streak || 0} Day Streak
                 </div>
                 <div className="badge badge-lg badge-outline gap-2 p-4">
-                  <Users className="w-4 h-4 text-info" /> {profile.friends?.length || 0} Friends
+                  <Code className="w-4 h-4 text-primary" /> {profile?.problemSolved?.length || 0} Solved
                 </div>
                 <div className="badge badge-lg badge-outline gap-2 p-4">
-                  <Trophy className="w-4 h-4 text-success" /> {profile.battleWins || 0} Wins
+                  <Users className="w-4 h-4 text-info" /> {profile?.friends?.length || 0} Friends
+                </div>
+                <div className="badge badge-lg badge-outline gap-2 p-4">
+                  <Trophy className="w-4 h-4 text-success" /> {profile?.battleWins || 0} Wins
                 </div>
               </div>
             </div>
@@ -153,11 +157,11 @@ export default function UserProfile() {
                       }}>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">
-                          {friend.firstName[0]}
+                          {friend?.firstName?.[0]?.toUpperCase() || '?'}
                         </div>
                         <div>
-                          <p className="font-bold text-sm">{friend.firstName} {friend.lastName}</p>
-                          <p className="text-xs text-base-content/60">Elo: {friend.eloRating || 1200}</p>
+                          <p className="font-bold text-sm">{friend?.firstName} {friend?.lastName}</p>
+                          <p className="text-xs text-base-content/60">Elo: {friend?.eloRating || 1200}</p>
                         </div>
                       </div>
                     </div>
@@ -171,6 +175,16 @@ export default function UserProfile() {
 
           {/* Right Column: Recent Activity & Battle History */}
           <div className="lg:col-span-2 space-y-8">
+
+            {/* Activity Heatmap */}
+            <div className="bg-base-100 rounded-3xl p-6 shadow-xl border border-base-300">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-accent" /> Contribution Graph
+              </h3>
+              <div className="overflow-x-auto w-full pb-4">
+                <ActivityHeatmap userId={profileId} />
+              </div>
+            </div>
             
             {/* Battle History */}
             <div className="bg-base-100 rounded-3xl p-6 shadow-xl border border-base-300">
