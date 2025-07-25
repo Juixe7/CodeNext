@@ -166,8 +166,13 @@ function Homepage() {
             <ul className="mt-3 p-2 shadow-xl menu menu-sm dropdown-content bg-base-100 rounded-2xl w-52 border border-base-300">
               <li className="px-3 py-2">
                 <div>
-                  <p className="font-semibold text-sm">{user?.firstName}</p>
+                  <p className="font-semibold text-sm">{user?.firstName} {user?.lastName || ''}</p>
                   <p className="text-xs text-base-content/50">{user?.emailId}</p>
+                  <div className="flex items-center gap-2 mt-1 font-medium text-xs">
+                    <span className="text-warning flex items-center gap-1"><Trophy className="w-3 h-3" /> {user?.eloRating || 1200}</span>
+                    <span className="text-base-content/30">|</span>
+                    <span className="text-success flex items-center gap-1"><Swords className="w-3 h-3" /> {user?.battleWins || 0}W - {user?.battleLosses || 0}L</span>
+                  </div>
                 </div>
               </li>
               <div className="divider my-1" />

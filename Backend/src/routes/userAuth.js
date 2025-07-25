@@ -17,8 +17,12 @@ authRouter.get('/check',userMiddleware,(req,res)=>{
     const reply = {
         emailId : req.result.emailId ,
         firstName : req.result.firstName ,
+        lastName: req.result.lastName,
         _id : req.result._id,
-        role: req.result.role
+        role: req.result.role,
+        eloRating: req.result.eloRating,
+        battleWins: req.result.battleWins,
+        battleLosses: req.result.battleLosses
     }
 
     res.status(200).json({

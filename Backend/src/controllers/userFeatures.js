@@ -224,7 +224,7 @@ const getPublicProfile = async (req, res) => {
             .populate({ path: 'winner', select: 'firstName lastName' });
 
         // Check if the requesting user is a friend of this profile
-        const isFriend = req.result ? user.friends.some(f => f._id.toString() === req.result._id.toString()) : false;
+        const isFriend = (req.result && user.friends) ? user.friends.some(f => f._id.toString() === req.result._id.toString()) : false;
 
         res.status(200).json({
             profile: user,

@@ -37,9 +37,13 @@ const register = async (req, res) => {
     res.status(201).json({
       user: {
         firstName: user.firstName,
+        lastName: user.lastName,
         emailId: user.emailId,
         _id: user._id,
         role: user.role,
+        eloRating: user.eloRating,
+        battleWins: user.battleWins,
+        battleLosses: user.battleLosses,
       },
       message: "Registered successfully",
     });
@@ -89,9 +93,13 @@ const login = async (req, res) => {
     res.status(200).json({
       user: {
         firstName: user.firstName,
+        lastName: user.lastName,
         emailId: user.emailId,
         _id: user._id,
         role: user.role,
+        eloRating: user.eloRating,
+        battleWins: user.battleWins,
+        battleLosses: user.battleLosses,
       },
       message: "Login successful",
     });
