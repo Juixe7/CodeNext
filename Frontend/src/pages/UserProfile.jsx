@@ -196,7 +196,7 @@ export default function UserProfile() {
                 <div className="space-y-3">
                   {recentMatches.map(match => {
                     const isWinner = match.winner?._id === profile._id;
-                    const opponent = match.players.find(p => p._id !== profile._id);
+                    const opponent = match.players.find(p => p && p._id !== profile._id);
                     
                     return (
                       <div key={match._id} className={`p-4 rounded-2xl border ${isWinner ? 'bg-success/5 border-success/20' : 'bg-error/5 border-error/20'} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4`}>

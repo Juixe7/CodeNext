@@ -224,7 +224,9 @@ const getPublicProfile = async (req, res) => {
             .populate({ path: 'winner', select: 'firstName lastName' });
 
         // Check if the requesting user is a friend of this profile
-        const isFriend = (req.result && user.friends) ? user.friends.some(f => f._id.toString() === req.result._id.toString()) : false;
+        // Filter out any nulls from deleted users
+        user.friends = user.friends ? user.friends.filter(f => f != null) : [];
+        const isFriend = (req.result && user.friends) ? user.friends.some(f => f._id && f._id.toString() === req.result._id.toString()) : false;
 
         res.status(200).json({
             profile: user,
