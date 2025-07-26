@@ -2,6 +2,7 @@ const User = require('../models/user');
 const Submission = require('../models/submission');
 const Problem = require('../models/problem');
 const Match = require('../models/match');
+const Message = require('../models/message');
 
 // ──────────────────────────────────────────────────────────────
 // Helper: update streak when user gets an accepted submission
@@ -292,4 +293,26 @@ const toggleFriend = async (req, res) => {
     }
 };
 
-module.exports = { getProfile, getHeatmap, getLeaderboard, toggleBookmark, getStreak, updateStreak, searchUsers, getPublicProfile, toggleFriend };
+// ──────────────────────────────────────────────────────────────
+// GET /user/messages/:friendId — Get chat history
+// ──────────────────────────────────────────────────────────────
+const getMessages = async (req, res) => {
+    try {
+        const currentUserId = req.result._id;
+        const friendId = req.params.friendId;
+        
+        const messages = await Message.find({
+            $or: [
+                { sender: currentUserId, receiver: friendId },
+                { sender: friendId, receiver: currentUserId }
+            ]
+        }).sort({ createdAt: 1 }).limit(100);
+        
+        res.status(200).json(messages);
+    } catch (err) {
+        console.error('getMessages error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+module.exports = { getProfile, getHeatmap, getLeaderboard, toggleBookmark, getStreak, updateStreak, searchUsers, getPublicProfile, toggleFriend, getMessages };

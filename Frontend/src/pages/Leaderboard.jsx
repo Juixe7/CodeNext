@@ -80,12 +80,13 @@ export default function Leaderboard() {
               const rank = idx + 1;
               return (
                 <div key={leader._id}
-                  className={`flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200
+                  className={`flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200 cursor-pointer hover:-translate-y-0.5
                     ${isMe
                       ? 'bg-primary/10 border-primary/30 shadow-sm shadow-primary/10'
                       : rank <= 3
-                        ? 'bg-warning/5 border-warning/20 hover:border-warning/40'
-                        : 'bg-base-100 border-base-300 hover:border-primary/30'}`}
+                        ? 'bg-warning/5 border-warning/20 hover:border-warning/40 hover:shadow-md'
+                        : 'bg-base-100 border-base-300 hover:border-primary/30 hover:shadow-sm'}`}
+                  onClick={() => window.location.href = `/profile/${leader._id}`}
                 >
                   {/* Rank */}
                   <div className="w-10 flex justify-center shrink-0">

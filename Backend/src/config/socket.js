@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const Match = require('../models/match');
 const Problem = require('../models/problem');
 const User = require('../models/user');
+const Message = require('../models/message');
 
 let io;
 let waitingQueue = [];
@@ -45,6 +46,9 @@ const initializeSocket = (server) => {
 
     io.on('connection', (socket) => {
         console.log(`User connected to socket: ${socket.user.id}`);
+        
+        // Join personal room for private messages
+        socket.join(socket.user.id);
 
         // Join Matchmaking Queue
         socket.on('join_queue', async () => {
@@ -115,6 +119,26 @@ const initializeSocket = (server) => {
         socket.on('rejoin_match', ({ matchId }) => {
             socket.join(matchId);
             console.log(`User ${socket.user.id} rejoined match room ${matchId}`);
+        });
+
+        // Chat Feature: Send a direct message
+        socket.on('send_message', async ({ receiverId, text }) => {
+            try {
+                // Save to database
+                const message = await Message.create({
+                    sender: socket.user.id,
+                    receiver: receiverId,
+                    text: text
+                });
+
+                // Emit to receiver
+                socket.to(receiverId).emit('receive_message', message);
+                
+                // Emit back to sender (optional, but good for confirmation)
+                socket.emit('message_sent', message);
+            } catch (err) {
+                console.error('Failed to send message:', err);
+            }
         });
 
         socket.on('disconnect', () => {

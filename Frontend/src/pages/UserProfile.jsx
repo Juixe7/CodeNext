@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
-import { Trophy, Users, Code, Calendar, Loader2, ArrowLeft, UserPlus, UserMinus, Flame, Swords, XCircle, Activity } from 'lucide-react';
+import { Trophy, Users, Code, Calendar, Loader2, ArrowLeft, UserPlus, UserMinus, Flame, Swords, XCircle, Activity, MessageCircle } from 'lucide-react';
 import axiosClient from '../utils/axiosClient';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 import ActivityHeatmap from '../components/ActivityHeatmap';
+import ChatComponent from '../components/ChatComponent';
 
 export default function UserProfile() {
   const { id } = useParams();
@@ -16,6 +17,7 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(true);
   const [isFriend, setIsFriend] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // If no ID is provided in URL, show the current logged-in user's profile
   const profileId = id || currentUser?._id;
@@ -125,7 +127,15 @@ export default function UserProfile() {
 
             {/* Actions */}
             {!isOwnProfile && (
-              <div className="w-full md:w-auto mt-6 md:mt-0">
+              <div className="w-full md:w-auto mt-6 md:mt-0 flex flex-col md:flex-row gap-3">
+                {isFriend && (
+                   <button 
+                     onClick={() => setIsChatOpen(true)}
+                     className="btn btn-lg w-full md:w-32 shadow-lg btn-primary shadow-primary/20 hover:shadow-primary/40 transition-all"
+                   >
+                     <MessageCircle className="w-5 h-5"/> Message
+                   </button>
+                )}
                 <button 
                   onClick={handleToggleFriend} 
                   disabled={actionLoading}
@@ -278,6 +288,15 @@ export default function UserProfile() {
 
         </div>
       </div>
+
+      {isChatOpen && (
+        <ChatComponent 
+          currentUser={currentUser} 
+          friendId={profile._id} 
+          friendName={profile.firstName} 
+          onClose={() => setIsChatOpen(false)} 
+        />
+      )}
     </div>
   );
 }
