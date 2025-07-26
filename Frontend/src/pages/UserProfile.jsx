@@ -31,7 +31,8 @@ export default function UserProfile() {
         setProfileData(response.data);
         setIsFriend(response.data.isFriend || false);
       } catch (err) {
-        toast.error('Failed to load profile');
+        console.error('Profile load error:', err.response?.status, err.response?.data, err.message);
+        toast.error(err.response?.data?.message || 'Failed to load profile');
       } finally {
         setLoading(false);
       }

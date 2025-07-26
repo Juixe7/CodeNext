@@ -202,31 +202,52 @@ const searchUsers = async (req, res) => {
 // ──────────────────────────────────────────────────────────────
 const getPublicProfile = async (req, res) => {
     try {
+        // Validate ObjectId format
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: 'Invalid user ID' });
+        }
+
         const user = await User.findById(req.params.id)
             .select('-password -emailId')
             .populate({ path: 'friends', select: 'firstName lastName eloRating' });
             
         if (!user) return res.status(404).json({ message: 'User not found' });
-        
-        const submissions = await Submission.find({ userId: user._id })
-            .sort({ createdAt: -1 })
-            .limit(10)
-            .populate({ path: 'problemId', select: 'title difficulty' });
 
-        const recentMatches = await Match.find({ 
-            players: user._id, 
-            status: 'finished' 
-        })
-            .sort({ createdAt: -1 })
-            .limit(5)
-            .populate({ path: 'problem', select: 'title difficulty' })
-            .populate({ path: 'players', select: 'firstName lastName eloRating' })
-            .populate({ path: 'winner', select: 'firstName lastName' });
+        // Filter out any nulls from deleted/missing friends
+        user.friends = user.friends ? user.friends.filter(f => f != null) : [];
+
+        // Fetch submissions — wrapped so a failure here doesn't break the whole profile
+        let submissions = [];
+        try {
+            submissions = await Submission.find({ userId: user._id })
+                .sort({ createdAt: -1 })
+                .limit(10)
+                .populate({ path: 'problemId', select: 'title difficulty' });
+        } catch (subErr) {
+            console.error('⚠️  Failed to fetch submissions for profile:', subErr.message);
+        }
+
+        // Fetch matches — wrapped independently
+        let recentMatches = [];
+        try {
+            recentMatches = await Match.find({ 
+                players: user._id, 
+                status: 'finished' 
+            })
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .populate({ path: 'problem', select: 'title difficulty' })
+                .populate({ path: 'players', select: 'firstName lastName eloRating' })
+                .populate({ path: 'winner', select: 'firstName lastName' });
+        } catch (matchErr) {
+            console.error('⚠️  Failed to fetch matches for profile:', matchErr.message);
+        }
 
         // Check if the requesting user is a friend of this profile
-        // Filter out any nulls from deleted users
-        user.friends = user.friends ? user.friends.filter(f => f != null) : [];
-        const isFriend = (req.result && user.friends) ? user.friends.some(f => f._id && f._id.toString() === req.result._id.toString()) : false;
+        const isFriend = (req.result && user.friends.length > 0)
+            ? user.friends.some(f => f._id && f._id.toString() === req.result._id.toString())
+            : false;
 
         res.status(200).json({
             profile: user,
@@ -235,6 +256,7 @@ const getPublicProfile = async (req, res) => {
             isFriend
         });
     } catch (err) {
+        console.error('❌ getPublicProfile error:', err.message, err.stack);
         res.status(500).json({ message: 'Server error' });
     }
 };
