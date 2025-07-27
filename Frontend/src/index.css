@@ -426,6 +426,46 @@ html {
   }
 }
 
+/* ── Chat Animations ── */
+@keyframes typingDot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+.animate-typing-dot {
+  animation: typingDot 1.4s ease-in-out infinite;
+}
+
+@keyframes chatIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-chat-in {
+  animation: chatIn 0.25s ease-out both;
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2s ease-in-out infinite;
+}
+
+/* Chat background pattern */
+.chat-bg {
+  background-image:
+    radial-gradient(circle at 20% 50%, oklch(var(--p) / 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, oklch(var(--s) / 0.03) 0%, transparent 50%);
+}
+
+/* Safe area for mobile keyboard */
+.safe-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
 /* Print styles */
 @media print {
   .no-print {

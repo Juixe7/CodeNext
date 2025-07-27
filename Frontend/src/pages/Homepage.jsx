@@ -137,26 +137,48 @@ function Homepage() {
           </NavLink>
         </div>
         <div className="flex-none flex flex-row items-center gap-2 sm:gap-4">
-          <div className="hidden md:block">
+          {/* Desktop Search & Links */}
+          <div className="hidden md:flex items-center gap-2">
             <UserSearch />
-          </div>
-          {user?.role === 'admin' && (
-            <NavLink to="/admin" className="btn btn-ghost btn-sm gap-1">
-              <Settings className="w-4 h-4" /> Admin
+            {user?.role === 'admin' && (
+              <NavLink to="/admin" className="btn btn-ghost btn-sm gap-1">
+                <Settings className="w-4 h-4" /> Admin
+              </NavLink>
+            )}
+            <NavLink to="/battle" className="btn btn-ghost btn-sm gap-1 text-primary">
+              <Swords className="w-4 h-4" /> Battle
             </NavLink>
-          )}
-          <NavLink to="/battle" className="btn btn-ghost btn-sm gap-1 text-primary">
-            <Swords className="w-4 h-4" /> Battle
-          </NavLink>
-          <NavLink to="/people" className="btn btn-ghost btn-sm gap-1">
-            <Users className="w-4 h-4" /> People
-          </NavLink>
-          <NavLink to="/leaderboard" className="btn btn-ghost btn-sm gap-1">
-            <Trophy className="w-4 h-4" /> Leaderboard
-          </NavLink>
+            <NavLink to="/people" className="btn btn-ghost btn-sm gap-1">
+              <Users className="w-4 h-4" /> People
+            </NavLink>
+            <NavLink to="/leaderboard" className="btn btn-ghost btn-sm gap-1">
+              <Trophy className="w-4 h-4" /> Leaderboard
+            </NavLink>
+          </div>
+
+          {/* Mobile Menu Dropdown */}
+          <div className="dropdown dropdown-end md:hidden">
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
+            </div>
+            <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 border border-base-300">
+              <li className="mb-2">
+                <div className="w-full">
+                  <UserSearch />
+                </div>
+              </li>
+              {user?.role === 'admin' && (
+                <li><NavLink to="/admin" className="py-2"><Settings className="w-4 h-4" /> Admin</NavLink></li>
+              )}
+              <li><NavLink to="/battle" className="py-2 text-primary"><Swords className="w-4 h-4" /> Battle</NavLink></li>
+              <li><NavLink to="/people" className="py-2"><Users className="w-4 h-4" /> People</NavLink></li>
+              <li><NavLink to="/leaderboard" className="py-2"><Trophy className="w-4 h-4" /> Leaderboard</NavLink></li>
+            </ul>
+          </div>
+
           {streak > 0 && (
             <div className="flex items-center gap-1 bg-orange-400/10 text-orange-400 px-2 py-1 rounded-full text-xs font-semibold">
-              <Flame className="w-3.5 h-3.5" /> {streak} day streak
+              <Flame className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{streak} day streak</span><span className="sm:hidden">{streak}</span>
             </div>
           )}
           <ThemeToggle size="sm" />

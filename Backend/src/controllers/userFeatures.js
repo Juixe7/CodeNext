@@ -422,7 +422,7 @@ const getConversations = async (req, res) => {
     try {
         const userId = req.result._id;
         const user = await User.findById(userId)
-            .populate({ path: 'friends', select: 'firstName lastName eloRating' });
+            .populate({ path: 'friends', select: 'firstName lastName eloRating lastSeen' });
 
         const validFriends = (user.friends || []).filter(f => f != null);
 

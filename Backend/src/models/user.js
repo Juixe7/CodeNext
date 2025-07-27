@@ -68,6 +68,10 @@ const userSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'user'
     }],
+    lastSeen: {
+        type: Date,
+        default: Date.now
+    },
     password:{
         type:String,
         required: true

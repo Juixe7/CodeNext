@@ -361,10 +361,10 @@ const ProblemPage = () => {
       </div>
 
       {/* ── Main Split Layout ── */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
         {/* ═══ LEFT PANEL ═══ */}
-        <div className="w-[48%] flex flex-col border-r border-base-300 min-w-0">
+        <div className="w-full lg:w-[48%] h-1/2 lg:h-full flex flex-col border-b lg:border-b-0 lg:border-r border-base-300 min-w-0">
 
           {/* Left Tabs */}
           <div className="flex items-center bg-base-200 border-b border-base-300 overflow-x-auto shrink-0">

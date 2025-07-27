@@ -8,6 +8,9 @@ const Message = require('../models/message');
 let io;
 let waitingQueue = [];
 
+// Track online users: userId -> Set of socketIds (supports multiple tabs)
+const onlineUsers = new Map();
+
 const initializeSocket = (server) => {
     io = new Server(server, {
         cors: {
@@ -45,16 +48,53 @@ const initializeSocket = (server) => {
     });
 
     io.on('connection', (socket) => {
-        console.log(`User connected to socket: ${socket.user.id}`);
+        const userId = socket.user.id;
+        console.log(`User connected to socket: ${userId}`);
         
         // Join personal room for private messages
-        socket.join(socket.user.id);
+        socket.join(userId);
+
+        // ── Online Presence ──
+        if (!onlineUsers.has(userId)) {
+            onlineUsers.set(userId, new Set());
+        }
+        onlineUsers.get(userId).add(socket.id);
+
+        // Broadcast this user is online to all connected users
+        io.emit('user_online', { userId });
+
+        // Send the full list of online users to the newly connected socket
+        const onlineList = Array.from(onlineUsers.keys());
+        socket.emit('online_users', onlineList);
+
+        // ── Typing Indicators ──
+        socket.on('start_typing', ({ receiverId }) => {
+            socket.to(receiverId).emit('user_typing', { userId });
+        });
+
+        socket.on('stop_typing', ({ receiverId }) => {
+            socket.to(receiverId).emit('user_stopped_typing', { userId });
+        });
+
+        // ── Mark Messages as Read ──
+        socket.on('mark_read', async ({ senderId }) => {
+            try {
+                await Message.updateMany(
+                    { sender: senderId, receiver: userId, read: { $ne: true } },
+                    { $set: { read: true } }
+                );
+                // Notify the original sender that their messages were read
+                socket.to(senderId).emit('messages_read', { readBy: userId });
+            } catch (err) {
+                console.error('mark_read error:', err);
+            }
+        });
 
         // Join Matchmaking Queue
         socket.on('join_queue', async () => {
-            if (waitingQueue.find(u => u.id === socket.user.id)) return; // Already in queue
+            if (waitingQueue.find(u => u.id === userId)) return; // Already in queue
 
-            waitingQueue.push({ id: socket.user.id, socketId: socket.id });
+            waitingQueue.push({ id: userId, socketId: socket.id });
             socket.emit('queue_status', { status: 'waiting' });
 
             if (waitingQueue.length >= 2) {
@@ -107,7 +147,7 @@ const initializeSocket = (server) => {
 
         // Leave Queue
         socket.on('leave_queue', () => {
-            waitingQueue = waitingQueue.filter(u => u.id !== socket.user.id);
+            waitingQueue = waitingQueue.filter(u => u.id !== userId);
         });
 
         // Broadcast progress to opponent
@@ -118,7 +158,7 @@ const initializeSocket = (server) => {
         // Rejoin match room when navigating to ProblemPage
         socket.on('rejoin_match', ({ matchId }) => {
             socket.join(matchId);
-            console.log(`User ${socket.user.id} rejoined match room ${matchId}`);
+            console.log(`User ${userId} rejoined match room ${matchId}`);
         });
 
         // Chat Feature: Send a direct message
@@ -126,7 +166,7 @@ const initializeSocket = (server) => {
             try {
                 // Save to database
                 const message = await Message.create({
-                    sender: socket.user.id,
+                    sender: userId,
                     receiver: receiverId,
                     text: text
                 });
@@ -141,13 +181,35 @@ const initializeSocket = (server) => {
             }
         });
 
-        socket.on('disconnect', () => {
-            waitingQueue = waitingQueue.filter(u => u.id !== socket.user.id);
-            console.log(`User disconnected from socket: ${socket.user.id}`);
+        socket.on('disconnect', async () => {
+            waitingQueue = waitingQueue.filter(u => u.id !== userId);
+            
+            // Remove this socket from the user's set
+            const sockets = onlineUsers.get(userId);
+            if (sockets) {
+                sockets.delete(socket.id);
+                // Only mark offline if NO tabs/sockets remain
+                if (sockets.size === 0) {
+                    onlineUsers.delete(userId);
+                    
+                    // Persist lastSeen timestamp
+                    try {
+                        await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
+                    } catch (err) {
+                        console.error('Failed to update lastSeen:', err);
+                    }
+
+                    // Broadcast offline status with lastSeen timestamp
+                    io.emit('user_offline', { userId, lastSeen: new Date() });
+                }
+            }
+
+            console.log(`User disconnected from socket: ${userId}`);
         });
     });
 };
 
 const getIo = () => io;
+const getOnlineUsers = () => onlineUsers;
 
-module.exports = { initializeSocket, getIo };
+module.exports = { initializeSocket, getIo, getOnlineUsers };
