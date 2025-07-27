@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
 import axiosClient from '../utils/axiosClient';
 import { Trophy, Medal, Award, TrendingUp, Flame, Code, ChevronUp } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
@@ -15,6 +15,7 @@ const RankBadge = ({ rank }) => {
 
 export default function Leaderboard() {
   const { user } = useSelector(state => state.auth);
+  const navigate = useNavigate();
   const [leaders, setLeaders] = useState([]);
   const [loading, setLoading] = useState(true);
   const myRank = leaders.findIndex(l => l._id === user?._id) + 1;
@@ -86,7 +87,7 @@ export default function Leaderboard() {
                       : rank <= 3
                         ? 'bg-warning/5 border-warning/20 hover:border-warning/40 hover:shadow-md'
                         : 'bg-base-100 border-base-300 hover:border-primary/30 hover:shadow-sm'}`}
-                  onClick={() => window.location.href = `/profile/${leader._id}`}
+                  onClick={() => navigate(`/profile/${leader._id}`)}
                 >
                   {/* Rank */}
                   <div className="w-10 flex justify-center shrink-0">

@@ -3,7 +3,7 @@ import { NavLink } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import axiosClient from '../utils/axiosClient';
 import { logoutUser } from '../authSlice';
-import { Code, Trophy, Search, User, LogOut, Settings, BookOpen, TrendingUp, CheckCircle, Flame, Swords } from 'lucide-react';
+import { Code, Trophy, Search, User, Users, LogOut, Settings, BookOpen, TrendingUp, CheckCircle, Flame, Swords } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import logoRoadCode from '../assets/RoadCodeLogo.jpg';
 import ActivityHeatmap from '../components/ActivityHeatmap';
@@ -147,6 +147,9 @@ function Homepage() {
           )}
           <NavLink to="/battle" className="btn btn-ghost btn-sm gap-1 text-primary">
             <Swords className="w-4 h-4" /> Battle
+          </NavLink>
+          <NavLink to="/people" className="btn btn-ghost btn-sm gap-1">
+            <Users className="w-4 h-4" /> People
           </NavLink>
           <NavLink to="/leaderboard" className="btn btn-ghost btn-sm gap-1">
             <Trophy className="w-4 h-4" /> Leaderboard
