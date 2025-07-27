@@ -20,6 +20,7 @@ const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const BattleLobby = lazy(() => import("./pages/BattleLobby"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
 const People     = lazy(() => import("./pages/People"));
+const Chat       = lazy(() => import("./pages/Chat"));
 const NotFound    = lazy(() => import("./pages/NotFound"));
 const Admin       = lazy(() => import("./pages/Admin"));
 const AdminPanel  = lazy(() => import("./components/AdminPanel"));
@@ -115,6 +116,8 @@ function App() {
               <Route path="/profile"     element={isAuthenticated ? <UserProfile /> : <Navigate to="/" />} />
               <Route path="/profile/:id" element={isAuthenticated ? <UserProfile /> : <Navigate to="/" />} />
               <Route path="/people"      element={isAuthenticated ? <People />      : <Navigate to="/" />} />
+              <Route path="/chat"        element={isAuthenticated ? <Chat />        : <Navigate to="/" />} />
+              <Route path="/chat/:userId" element={isAuthenticated ? <Chat />       : <Navigate to="/" />} />
               <Route path="/problem/:problemId" element={<ProblemPage />} />
 
               {/* Admin routes */}

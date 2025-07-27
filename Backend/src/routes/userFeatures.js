@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const userMiddleware = require('../middleware/userMiddleware');
-const { getProfile, getHeatmap, getLeaderboard, toggleBookmark, getStreak, searchUsers, getPublicProfile, toggleFriend, getMessages } = require('../controllers/userFeatures');
+const { getProfile, getHeatmap, getLeaderboard, toggleBookmark, getStreak, searchUsers, getPublicProfile, sendFriendRequest, getFriendRequests, respondFriendRequest, removeFriend, getConversations, getMessages } = require('../controllers/userFeatures');
 const { reviewCode } = require('../controllers/codeReview');
 
 // Rate limit: 5 code reviews per user per minute (more expensive)
@@ -22,7 +22,15 @@ router.get('/streak', userMiddleware, getStreak);
 // Social Features
 router.get('/search', userMiddleware, searchUsers);
 router.get('/public-profile/:id', userMiddleware, getPublicProfile);
-router.post('/friend/:id', userMiddleware, toggleFriend);
+
+// Friend Request System
+router.post('/friend-request/:id', userMiddleware, sendFriendRequest);
+router.get('/friend-requests', userMiddleware, getFriendRequests);
+router.post('/friend-request/:requestId/respond', userMiddleware, respondFriendRequest);
+router.delete('/friend/:id', userMiddleware, removeFriend);
+
+// Chat
+router.get('/conversations', userMiddleware, getConversations);
 router.get('/messages/:friendId', userMiddleware, getMessages);
 
 // Activity heatmap

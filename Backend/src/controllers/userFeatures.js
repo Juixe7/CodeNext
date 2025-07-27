@@ -3,6 +3,7 @@ const Submission = require('../models/submission');
 const Problem = require('../models/problem');
 const Match = require('../models/match');
 const Message = require('../models/message');
+const FriendRequest = require('../models/friendRequest');
 
 // ──────────────────────────────────────────────────────────────
 // Helper: update streak when user gets an accepted submission
@@ -245,16 +246,35 @@ const getPublicProfile = async (req, res) => {
             console.error('⚠️  Failed to fetch matches for profile:', matchErr.message);
         }
 
-        // Check if the requesting user is a friend of this profile
+        // Determine friendship status
         const isFriend = (req.result && user.friends.length > 0)
             ? user.friends.some(f => f._id && f._id.toString() === req.result._id.toString())
             : false;
+
+        let friendshipStatus = 'none';
+        if (isFriend) {
+            friendshipStatus = 'friends';
+        } else if (req.result) {
+            const pendingRequest = await FriendRequest.findOne({
+                $or: [
+                    { sender: req.result._id, receiver: user._id },
+                    { sender: user._id, receiver: req.result._id }
+                ],
+                status: 'pending'
+            });
+            if (pendingRequest) {
+                friendshipStatus = pendingRequest.sender.toString() === req.result._id.toString()
+                    ? 'request_sent'
+                    : 'request_received';
+            }
+        }
 
         res.status(200).json({
             profile: user,
             recentSubmissions: submissions,
             recentMatches: recentMatches,
-            isFriend
+            isFriend,
+            friendshipStatus
         });
     } catch (err) {
         console.error('❌ getPublicProfile error:', err.message, err.stack);
@@ -263,32 +283,183 @@ const getPublicProfile = async (req, res) => {
 };
 
 // ──────────────────────────────────────────────────────────────
-// POST /user/friend/:id — Add or remove a friend
+// POST /user/friend-request/:id — Send a friend request
 // ──────────────────────────────────────────────────────────────
-const toggleFriend = async (req, res) => {
+const sendFriendRequest = async (req, res) => {
     try {
-        const currentUserId = req.result._id;
-        const targetUserId = req.params.id;
-        
-        if (currentUserId.toString() === targetUserId) {
-            return res.status(400).json({ message: 'Cannot friend yourself' });
+        const senderId = req.result._id;
+        const receiverId = req.params.id;
+
+        if (senderId.toString() === receiverId) {
+            return res.status(400).json({ message: 'Cannot send request to yourself' });
         }
 
-        const currentUser = await User.findById(currentUserId);
-        const idx = currentUser.friends.indexOf(targetUserId);
-        
-        let isFriend;
-        if (idx === -1) {
-            currentUser.friends.push(targetUserId);
-            isFriend = true;
-        } else {
-            currentUser.friends.splice(idx, 1);
-            isFriend = false;
+        // Check if already friends
+        const sender = await User.findById(senderId);
+        if (sender.friends.includes(receiverId)) {
+            return res.status(400).json({ message: 'Already friends' });
         }
-        await currentUser.save();
-        
-        res.status(200).json({ isFriend, friends: currentUser.friends });
+
+        // Check if a request already exists in either direction
+        const existing = await FriendRequest.findOne({
+            $or: [
+                { sender: senderId, receiver: receiverId },
+                { sender: receiverId, receiver: senderId }
+            ],
+            status: 'pending'
+        });
+
+        if (existing) {
+            // If the OTHER person already sent us a request, auto-accept
+            if (existing.sender.toString() === receiverId) {
+                existing.status = 'accepted';
+                await existing.save();
+                // Add to both friends lists
+                await User.findByIdAndUpdate(senderId, { $addToSet: { friends: receiverId } });
+                await User.findByIdAndUpdate(receiverId, { $addToSet: { friends: senderId } });
+                return res.status(200).json({ status: 'accepted', message: 'Friend request accepted!' });
+            }
+            return res.status(400).json({ message: 'Request already sent' });
+        }
+
+        await FriendRequest.create({ sender: senderId, receiver: receiverId });
+        res.status(201).json({ status: 'pending', message: 'Friend request sent!' });
     } catch (err) {
+        console.error('sendFriendRequest error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// GET /user/friend-requests — Get pending requests for current user
+// ──────────────────────────────────────────────────────────────
+const getFriendRequests = async (req, res) => {
+    try {
+        const userId = req.result._id;
+
+        const received = await FriendRequest.find({ receiver: userId, status: 'pending' })
+            .populate({ path: 'sender', select: 'firstName lastName eloRating' })
+            .sort({ createdAt: -1 });
+
+        const sent = await FriendRequest.find({ sender: userId, status: 'pending' })
+            .populate({ path: 'receiver', select: 'firstName lastName eloRating' })
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ received, sent });
+    } catch (err) {
+        console.error('getFriendRequests error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// POST /user/friend-request/:requestId/respond — Accept or reject
+// ──────────────────────────────────────────────────────────────
+const respondFriendRequest = async (req, res) => {
+    try {
+        const userId = req.result._id;
+        const { action } = req.body; // 'accept' or 'reject'
+
+        const request = await FriendRequest.findById(req.params.requestId);
+        if (!request) return res.status(404).json({ message: 'Request not found' });
+
+        if (request.receiver.toString() !== userId.toString()) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        if (request.status !== 'pending') {
+            return res.status(400).json({ message: 'Request already processed' });
+        }
+
+        if (action === 'accept') {
+            request.status = 'accepted';
+            await request.save();
+            // Add to both friends arrays
+            await User.findByIdAndUpdate(request.sender, { $addToSet: { friends: request.receiver } });
+            await User.findByIdAndUpdate(request.receiver, { $addToSet: { friends: request.sender } });
+            res.status(200).json({ status: 'accepted' });
+        } else {
+            request.status = 'rejected';
+            await request.save();
+            res.status(200).json({ status: 'rejected' });
+        }
+    } catch (err) {
+        console.error('respondFriendRequest error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// DELETE /user/friend/:id — Unfriend (remove from both arrays)
+// ──────────────────────────────────────────────────────────────
+const removeFriend = async (req, res) => {
+    try {
+        const userId = req.result._id;
+        const friendId = req.params.id;
+
+        await User.findByIdAndUpdate(userId, { $pull: { friends: friendId } });
+        await User.findByIdAndUpdate(friendId, { $pull: { friends: userId } });
+
+        // Also clean up any friend request records
+        await FriendRequest.deleteMany({
+            $or: [
+                { sender: userId, receiver: friendId },
+                { sender: friendId, receiver: userId }
+            ]
+        });
+
+        res.status(200).json({ message: 'Unfriended' });
+    } catch (err) {
+        console.error('removeFriend error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// GET /user/conversations — Get friends with last message (for chat sidebar)
+// ──────────────────────────────────────────────────────────────
+const getConversations = async (req, res) => {
+    try {
+        const userId = req.result._id;
+        const user = await User.findById(userId)
+            .populate({ path: 'friends', select: 'firstName lastName eloRating' });
+
+        const validFriends = (user.friends || []).filter(f => f != null);
+
+        const conversations = await Promise.all(
+            validFriends.map(async (friend) => {
+                const lastMessage = await Message.findOne({
+                    $or: [
+                        { sender: userId, receiver: friend._id },
+                        { sender: friend._id, receiver: userId }
+                    ]
+                }).sort({ createdAt: -1 });
+
+                const unreadCount = await Message.countDocuments({
+                    sender: friend._id,
+                    receiver: userId,
+                    read: { $ne: true }
+                });
+
+                return {
+                    friend,
+                    lastMessage,
+                    unreadCount
+                };
+            })
+        );
+
+        // Sort by last message time (most recent first), friends with no messages last
+        conversations.sort((a, b) => {
+            if (!a.lastMessage && !b.lastMessage) return 0;
+            if (!a.lastMessage) return 1;
+            if (!b.lastMessage) return -1;
+            return new Date(b.lastMessage.createdAt) - new Date(a.lastMessage.createdAt);
+        });
+
+        res.status(200).json(conversations);
+    } catch (err) {
+        console.error('getConversations error:', err);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -306,7 +477,13 @@ const getMessages = async (req, res) => {
                 { sender: currentUserId, receiver: friendId },
                 { sender: friendId, receiver: currentUserId }
             ]
-        }).sort({ createdAt: 1 }).limit(100);
+        }).sort({ createdAt: 1 }).limit(200);
+
+        // Mark messages from friend as read
+        await Message.updateMany(
+            { sender: friendId, receiver: currentUserId, read: { $ne: true } },
+            { $set: { read: true } }
+        );
         
         res.status(200).json(messages);
     } catch (err) {
@@ -315,4 +492,5 @@ const getMessages = async (req, res) => {
     }
 };
 
-module.exports = { getProfile, getHeatmap, getLeaderboard, toggleBookmark, getStreak, updateStreak, searchUsers, getPublicProfile, toggleFriend, getMessages };
+module.exports = { getProfile, getHeatmap, getLeaderboard, toggleBookmark, getStreak, updateStreak, searchUsers, getPublicProfile, sendFriendRequest, getFriendRequests, respondFriendRequest, removeFriend, getConversations, getMessages };
+

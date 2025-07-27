@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
-import { Trophy, Users, Code, Calendar, Loader2, ArrowLeft, UserPlus, UserMinus, Flame, Swords, XCircle, Activity, MessageCircle } from 'lucide-react';
+import { Trophy, Users, Code, Calendar, Loader2, ArrowLeft, UserPlus, UserMinus, Flame, Swords, XCircle, Activity, MessageCircle, Clock, CheckCircle } from 'lucide-react';
 import axiosClient from '../utils/axiosClient';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 import ActivityHeatmap from '../components/ActivityHeatmap';
-import ChatComponent from '../components/ChatComponent';
 
 export default function UserProfile() {
   const { id } = useParams();
@@ -15,9 +14,8 @@ export default function UserProfile() {
   
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isFriend, setIsFriend] = useState(false);
+  const [friendshipStatus, setFriendshipStatus] = useState('none');
   const [actionLoading, setActionLoading] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // If no ID is provided in URL, show the current logged-in user's profile
   const profileId = id || currentUser?._id;
@@ -31,7 +29,7 @@ export default function UserProfile() {
       try {
         const response = await axiosClient.get(`/user/public-profile/${profileId}`);
         setProfileData(response.data);
-        setIsFriend(response.data.isFriend || false);
+        setFriendshipStatus(response.data.friendshipStatus || 'none');
       } catch (err) {
         console.error('Profile load error:', err.response?.status, err.response?.data, err.message);
         toast.error(err.response?.data?.message || 'Failed to load profile');
@@ -43,14 +41,32 @@ export default function UserProfile() {
     fetchProfile();
   }, [profileId, isOwnProfile, currentUser]);
 
-  const handleToggleFriend = async () => {
+  const handleSendRequest = async () => {
     setActionLoading(true);
     try {
-      const res = await axiosClient.post(`/user/friend/${profileId}`);
-      setIsFriend(res.data.isFriend);
-      toast.success(res.data.isFriend ? 'Added to friends!' : 'Removed from friends');
+      const res = await axiosClient.post(`/user/friend-request/${profileId}`);
+      if (res.data.status === 'accepted') {
+        setFriendshipStatus('friends');
+        toast.success('You are now friends!');
+      } else {
+        setFriendshipStatus('request_sent');
+        toast.success('Friend request sent!');
+      }
     } catch (err) {
-      toast.error('Failed to update friends list');
+      toast.error(err.response?.data?.message || 'Failed to send request');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRemoveFriend = async () => {
+    setActionLoading(true);
+    try {
+      await axiosClient.delete(`/user/friend/${profileId}`);
+      setFriendshipStatus('none');
+      toast.success('Removed from friends');
+    } catch (err) {
+      toast.error('Failed to remove friend');
     } finally {
       setActionLoading(false);
     }
@@ -128,23 +144,41 @@ export default function UserProfile() {
             {/* Actions */}
             {!isOwnProfile && (
               <div className="w-full md:w-auto mt-6 md:mt-0 flex flex-col md:flex-row gap-3">
-                {isFriend && (
-                   <button 
-                     onClick={() => setIsChatOpen(true)}
-                     className="btn btn-lg w-full md:w-32 shadow-lg btn-primary shadow-primary/20 hover:shadow-primary/40 transition-all"
-                   >
-                     <MessageCircle className="w-5 h-5"/> Message
-                   </button>
+                {friendshipStatus === 'friends' && (
+                  <button 
+                    onClick={() => navigate(`/chat/${profileId}`)}
+                    className="btn btn-lg w-full md:w-32 shadow-lg btn-primary shadow-primary/20 hover:shadow-primary/40 transition-all"
+                  >
+                    <MessageCircle className="w-5 h-5"/> Message
+                  </button>
                 )}
-                <button 
-                  onClick={handleToggleFriend} 
-                  disabled={actionLoading}
-                  className={`btn btn-lg w-full md:w-48 shadow-lg transition-all ${isFriend ? 'btn-outline' : 'btn-primary shadow-primary/20 hover:shadow-primary/40'}`}
-                >
-                  {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 
-                   isFriend ? <><UserMinus className="w-5 h-5"/> Remove Friend</> : 
-                   <><UserPlus className="w-5 h-5"/> Add Friend</>}
-                </button>
+
+                {friendshipStatus === 'none' && (
+                  <button onClick={handleSendRequest} disabled={actionLoading}
+                    className="btn btn-lg w-full md:w-52 btn-primary shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
+                    {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><UserPlus className="w-5 h-5"/> Send Friend Request</>}
+                  </button>
+                )}
+
+                {friendshipStatus === 'request_sent' && (
+                  <button disabled className="btn btn-lg w-full md:w-52 btn-outline btn-disabled gap-2">
+                    <Clock className="w-5 h-5" /> Request Sent
+                  </button>
+                )}
+
+                {friendshipStatus === 'request_received' && (
+                  <button onClick={handleSendRequest} disabled={actionLoading}
+                    className="btn btn-lg w-full md:w-52 btn-success shadow-lg transition-all">
+                    {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle className="w-5 h-5"/> Accept Request</>}
+                  </button>
+                )}
+
+                {friendshipStatus === 'friends' && (
+                  <button onClick={handleRemoveFriend} disabled={actionLoading}
+                    className="btn btn-lg w-full md:w-48 btn-outline btn-error transition-all">
+                    {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><UserMinus className="w-5 h-5"/> Unfriend</>}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -288,15 +322,6 @@ export default function UserProfile() {
 
         </div>
       </div>
-
-      {isChatOpen && (
-        <ChatComponent 
-          currentUser={currentUser} 
-          friendId={profile._id} 
-          friendName={profile.firstName} 
-          onClose={() => setIsChatOpen(false)} 
-        />
-      )}
     </div>
   );
 }
