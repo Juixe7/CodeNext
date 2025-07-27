@@ -255,7 +255,7 @@ const ProblemPage = () => {
   if (loading && !problem) return <SkeletonLoader />;
 
   const diff = difficultyConfig[problem?.difficulty] || difficultyConfig.easy;
-  const pageTitle = problem ? `${problem.title} | ${problem.difficulty} | RoadCode` : 'RoadCode';
+  const pageTitle = problem ? `${problem.title} | ${problem.difficulty} | CodeNEXT` : 'CodeNEXT';
 
   const leftTabs = [
     { id: 'description', label: 'Description', icon: FileText },

@@ -28,7 +28,7 @@ function NotFound() {
       </div>
 
       <div className="mt-16 font-mono text-xs text-base-content/20 bg-base-200 px-4 py-2 rounded-lg">
-        Error 404 · RoadCode
+        Error 404 · CodeNEXT
       </div>
     </div>
   );

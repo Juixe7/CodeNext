@@ -7,7 +7,7 @@ import { loginUser, clearError } from "../authSlice";
 import { useEffect, useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, User } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
-import logoRoadCode from '../assets/RoadCodeLogo.jpg';
+import logoCodeNEXT from '../assets/CodeNEXTLogo.jpg';
 
 const loginSchema = z.object({
   emailId: z.string().email("Please enter a valid email address"),
@@ -63,8 +63,8 @@ function Login() {
             <div className="flex justify-center mb-4">
               <div className="bg-primary/10 p-2 rounded-full shadow-lg ring-4 ring-primary/5 hover:ring-primary/20 transition-all duration-300">
                 <img 
-                  src={logoRoadCode} 
-                  alt="RoadCode Logo" 
+                  src={logoCodeNEXT}
+                  alt="CodeNEXT Logo"
                   className="w-16 h-16 rounded-full object-cover"
                 />
               </div>

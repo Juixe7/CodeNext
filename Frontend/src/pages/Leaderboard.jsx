@@ -30,8 +30,8 @@ export default function Leaderboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100">
       <Helmet>
-        <title>Global Leaderboard | RoadCode</title>
-        <meta name="description" content="See the top DSA coders on RoadCode ranked by problem-solving score." />
+        <title>Global Leaderboard | CodeNEXT</title>
+        <meta name="description" content="See the top DSA coders on CodeNEXT ranked by problem-solving score." />
       </Helmet>
       {/* Navbar */}
       <nav className="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-40 border-b border-base-300 px-6">

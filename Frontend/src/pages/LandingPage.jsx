@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router';
 import { Code2, Terminal, Brain, Trophy, ArrowRight, Zap, Target, Users, BookOpen } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
-import logoRoadCode from '../assets/RoadCodeLogo.jpg';
+import logoCodeNEXT from '../assets/CodeNEXTLogo.jpg';
 import { Helmet } from 'react-helmet-async';
 
 const features = [
@@ -45,7 +45,7 @@ function LandingPage() {
   return (
     <div className="min-h-screen bg-base-100 flex flex-col font-sans transition-colors duration-300">
       <Helmet>
-        <title>RoadCode — Master Algorithms &amp; Crack the Interview</title>
+        <title>CodeNEXT — Master Algorithms &amp; Crack the Interview</title>
         <meta name="description" content="An interactive DSA learning platform with AI hints, video editorials, and real-time code execution. Practice 200+ problems today." />
       </Helmet>
       {/* Navbar */}
@@ -53,12 +53,12 @@ function LandingPage() {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <img 
-              src={logoRoadCode} 
-              alt="RoadCode Logo" 
+              src={logoCodeNEXT}
+              alt="CodeNEXT Logo"
               className="w-10 h-10 rounded-xl object-cover shadow-sm"
             />
             <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              RoadCode
+              CodeNEXT
             </span>
           </div>
         </div>
@@ -214,10 +214,10 @@ function LandingPage() {
       <footer className="footer footer-center p-10 bg-base-200 text-base-content border-t border-base-300">
         <aside>
           <div className="flex items-center gap-2 mb-2">
-            <img src={logoRoadCode} alt="Logo" className="w-8 h-8 rounded-lg grayscale opacity-70" />
-            <span className="font-bold text-lg tracking-tight">RoadCode</span>
+            <img src={logoCodeNEXT} alt="Logo" className="w-8 h-8 rounded-lg grayscale opacity-70" />
+            <span className="font-bold text-lg tracking-tight">CodeNEXT</span>
           </div>
-          <p className="opacity-60 text-sm">© {new Date().getFullYear()} RoadCode. All rights reserved.</p>
+          <p className="opacity-60 text-sm">© {new Date().getFullYear()} CodeNEXT. All rights reserved.</p>
         </aside>
       </footer>
     </div>

@@ -212,7 +212,7 @@ export default function Chat() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-base-200 overflow-hidden">
-      <Helmet><title>Chat | RoadCode</title></Helmet>
+      <Helmet><title>Chat | CodeNEXT</title></Helmet>
 
       {/* Top bar */}
       <div className="bg-base-100 border-b border-base-300 px-3 sm:px-4 py-2 flex items-center gap-2 sm:gap-3 shrink-0 z-10 shadow-sm">
