@@ -1,4 +1,4 @@
-# 🚀 CodeRoad
+# 🚀 CodeNEXT
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Backend](https://img.shields.io/badge/Backend-Node.js-blue)](https://nodejs.org/)
